@@ -25,6 +25,8 @@ npm install
 npm run dados-exemplo   # opcional: insere os dois exemplos do documento (§26 e §27)
 npm run dev             # desenvolvimento, http://localhost:43127
 npm run build && npm start   # uso normal, arranca mais rápido
+npm run limpar-dados         # ver quantos registos existem (não apaga)
+npm run limpar-dados -- --sim   # apagar tudo e voltar ao zero
 ```
 
 Não corras `npm run build` com o `npm run dev` ligado: partilham a pasta `.next` e o
