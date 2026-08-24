@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Estrutura } from "@/components/estrutura";
 import { ProvedorTema } from "@/components/tema";
 import { Toaster } from "@/components/ui/sonner";
+import { authConfigurada, sessaoAtual } from "@/lib/auth";
 import { logotipos } from "@/lib/logo";
 import "./globals.css";
 
@@ -23,7 +24,10 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const sessao = await sessaoAtual();
+  const protegido = authConfigurada();
+
   return (
     <html
       lang="pt-PT"
@@ -32,7 +36,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full">
         <ProvedorTema>
-          <Estrutura logos={logotipos()}>{children}</Estrutura>
+          <Estrutura logos={logotipos()} sessao={sessao} protegido={protegido}>
+            {children}
+          </Estrutura>
           <Toaster position="bottom-right" />
         </ProvedorTema>
       </body>
