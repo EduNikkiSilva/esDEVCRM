@@ -154,40 +154,26 @@ DATABASE_URL="postgresql://utilizador:senha@servidor/base" npm start
 
 ## Como trabalhamos (regras de colaboração)
 
-A `main` é tua. Eu nunca lhe faço push.
+Trabalho diretamente na `main` e só faço push depois de o build, o lint e as duas baterias de
+testes passarem. A Vercel republica sozinha a cada push.
 
-1. **Tu pedes** a alteração, em texto normal.
-2. **Eu implemento e testo** aqui, e envio para uma branch com o prefixo `cursor/`.
-3. **Tu revês, decides e publicas.** O merge para a `main` é sempre teu.
-
-No teu computador, para trazer e experimentar o que eu fiz:
+O teu papel é revisão e travão de emergência, não integração:
 
 ```powershell
 cd "$env:USERPROFILE\Documents\esDEVCRM"
-git fetch origin
-git checkout cursor/<nome-da-branch>
-npm install            # só se as dependências mudaram
-npm run dev            # experimentar em http://localhost:43127
+git pull                 # trazer o que eu fiz
 ```
 
-Se gostares, o merge com a tua assinatura num único commit:
+Se alguma alteração te desagradar, o histórico é linear e cada alteração é um commit só:
 
 ```powershell
-git checkout main
-git merge --squash cursor/<nome-da-branch>
-git commit -m "descrição da alteração"
-git push
+git log --oneline -5     # ver os últimos
+git revert <hash>        # desfazer um deles
+git push                 # e a Vercel volta ao estado anterior
 ```
 
-O `--squash` junta o meu trabalho num só commit, assinado por ti — a `main` fica com o teu
-histórico, limpo. Se não gostares, `git checkout main` e ignoras a branch; nada se perdeu.
-
-Para apagar branches já integradas:
-
-```powershell
-git branch -d cursor/<nome-da-branch>
-git push origin --delete cursor/<nome-da-branch>
-```
+Na Vercel tens outra rede de segurança, ainda mais rápida: **Deployments** → nos três pontos de
+uma publicação anterior → **Promote to Production**. Reverte em segundos, sem tocar no código.
 
 ## Fazer alterações
 
