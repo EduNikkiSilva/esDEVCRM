@@ -9,23 +9,38 @@ import { PaletaComandos } from "@/components/paleta-comandos";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import type { Logotipos } from "@/lib/logo";
+import type { Sessao } from "@/lib/sessao";
 import { tituloDaRota } from "@/lib/navegacao";
 
 export function Estrutura({
   children,
   logos,
+  sessao,
+  protegido,
 }: {
   children: React.ReactNode;
   logos: Logotipos;
+  sessao: Sessao | null;
+  protegido: boolean;
 }) {
   const [paleta, setPaleta] = useState(false);
   const [menu, setMenu] = useState(false);
   const pathname = usePathname();
 
+  // O ecrã de entrada não mostra navegação: quem não tem sessão não vê nada da app.
+  if (pathname.startsWith("/login")) {
+    return <main className="px-4 py-10 sm:px-6">{children}</main>;
+  }
+
   return (
     <div className="min-h-screen">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-white/5 lg:block">
-        <ConteudoBarraLateral logos={logos} abrirPaleta={() => setPaleta(true)} />
+        <ConteudoBarraLateral
+          logos={logos}
+          sessao={sessao}
+          protegido={protegido}
+          abrirPaleta={() => setPaleta(true)}
+        />
       </aside>
 
       <div className="lg:pl-64">
@@ -41,7 +56,12 @@ export function Estrutura({
               />
               <SheetContent side="left" className="w-72 border-r-0 p-0">
                 <SheetTitle className="sr-only">Navegação</SheetTitle>
-                <ConteudoBarraLateral logos={logos} onNavegar={() => setMenu(false)} />
+                <ConteudoBarraLateral
+                  logos={logos}
+                  sessao={sessao}
+                  protegido={protegido}
+                  onNavegar={() => setMenu(false)}
+                />
               </SheetContent>
             </Sheet>
 

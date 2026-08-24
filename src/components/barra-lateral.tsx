@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Command, Database } from "lucide-react";
+import { Command, Database, LogOut, ShieldAlert } from "lucide-react";
 import { LogoEsdev } from "@/components/logotipo";
 import { SeletorTema } from "@/components/tema";
 import type { Logotipos } from "@/lib/logo";
+import type { Sessao } from "@/lib/sessao";
 import { NAVEGACAO } from "@/lib/navegacao";
 import { cn } from "@/lib/utils";
 
@@ -13,10 +14,14 @@ export function ConteudoBarraLateral({
   onNavegar,
   abrirPaleta,
   logos,
+  sessao,
+  protegido,
 }: {
   onNavegar?: () => void;
   abrirPaleta?: () => void;
   logos: Logotipos;
+  sessao?: Sessao | null;
+  protegido?: boolean;
 }) {
   const pathname = usePathname();
 
@@ -93,10 +98,34 @@ export function ConteudoBarraLateral({
       </nav>
 
       <div className="space-y-3 border-t border-white/10 px-4 py-4">
-        <div className="flex items-center gap-2 text-[11px] text-white/40">
-          <Database className="size-3.5 shrink-0" />
-          <span className="truncate">Base de dados local · data/esdev.db</span>
-        </div>
+        {protegido === false ? (
+          <p className="flex items-start gap-2 rounded-lg border border-amber-400/30 bg-amber-400/10 p-2 text-[11px] leading-snug text-amber-200">
+            <ShieldAlert className="mt-0.5 size-3.5 shrink-0" />
+            Sem autenticação configurada. Não publiques assim.
+          </p>
+        ) : null}
+
+        {sessao ? (
+          <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium text-white/80">{sessao.nome}</p>
+              <p className="truncate text-[11px] text-white/40">{sessao.email}</p>
+            </div>
+            <a
+              href="/api/auth/sair"
+              title="Terminar sessão"
+              className="grid size-7 shrink-0 place-items-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <LogOut className="size-3.5" />
+            </a>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-[11px] text-white/40">
+            <Database className="size-3.5 shrink-0" />
+            <span className="truncate">Base de dados local · data/esdev.db</span>
+          </div>
+        )}
+
         <SeletorTema />
       </div>
     </div>
