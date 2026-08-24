@@ -60,7 +60,18 @@ if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
   Write-Host "  Node.js nao encontrado. Instala a versao LTS em https://nodejs.org e repete." -ForegroundColor Red
   exit 1
 }
-Write-Host "  Node.js $(node -v)" -ForegroundColor Green
+$versao = (node -v).TrimStart("v")
+$partes = $versao.Split(".")
+$maior = [int]$partes[0]
+$menor = [int]$partes[1]
+if ($maior -lt 22 -or ($maior -eq 22 -and $menor -lt 13)) {
+  Write-Host ""
+  Write-Host "  Node.js $versao e demasiado antigo. E necessario 22.13 ou superior" -ForegroundColor Red
+  Write-Host "  (o CRM usa o SQLite embutido no Node, que nao existe em versoes anteriores)."
+  Write-Host "  Instala a versao LTS:  winget install --id OpenJS.NodeJS.LTS -e" -ForegroundColor Cyan
+  exit 1
+}
+Write-Host "  Node.js $versao" -ForegroundColor Green
 
 Write-Host "  A instalar dependencias (pode levar 1-2 minutos)..." -ForegroundColor Yellow
 npm install --no-fund --no-audit

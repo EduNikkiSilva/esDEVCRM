@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
-    "better-sqlite3": "^13.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -30,8 +29,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/better-sqlite3": "^9.6.0",
-    "@types/node": "^20",
+    "@types/node": "^24.13.3",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
@@ -40,5 +38,8 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "description": "CRM interno da esDEV — pipeline, briefings, calculadora de preços, propostas, projetos, faturação e manutenção."
+  "description": "CRM interno da esDEV — pipeline, briefings, calculadora de preços, propostas, projetos, faturação e manutenção.",
+  "engines": {
+    "node": ">=22.13"
+  }
 }

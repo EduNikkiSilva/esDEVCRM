@@ -18,7 +18,7 @@ própria, sem barra de endereço, como uma app de desktop. **macOS / Linux:** `.
 O guia completo de instalação — onde guardar a pasta, como afixar no menu Iniciar, backups e
 acesso pelo telemóvel — está em **[INSTALACAO.md](INSTALACAO.md)**.
 
-Manualmente, com Node.js 20 ou superior:
+Manualmente, com **Node.js 22.13 ou superior** (o CRM usa o SQLite embutido no Node):
 
 ```bash
 npm install
@@ -249,7 +249,11 @@ scripts/             dados de exemplo e gerador da calculadora em Excel
 ```
 
 Stack: Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, Recharts, next-themes e
-SQLite via better-sqlite3.
+o SQLite embutido no Node (`node:sqlite`).
+
+Não há dependências nativas de propósito: o `better-sqlite3` obrigava a compilar com o
+Visual Studio e as ferramentas de C++ em Windows, o que tornava a instalação impraticável.
+O `node:sqlite` vem com o Node e não compila nada.
 
 ## Avisos
 

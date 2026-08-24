@@ -39,8 +39,14 @@ estiver sincronizada.
 
 ## 2. Instalar o Node.js (uma vez, ~2 minutos)
 
-O CRM precisa do Node.js para correr. Vai a [nodejs.org](https://nodejs.org), descarrega a
-versão **LTS** para Windows e instala com as opções por omissão.
+O CRM precisa do Node.js **22.13 ou superior** — usa o SQLite que vem embutido no Node, por
+isso não é preciso instalar compiladores nem o Visual Studio. Vai a
+[nodejs.org](https://nodejs.org), descarrega a versão **LTS** para Windows e instala com as
+opções por omissão, ou:
+
+```powershell
+winget install --id OpenJS.NodeJS.LTS -e
+```
 
 Para confirmar, abre o **PowerShell** e escreve:
 
@@ -172,6 +178,7 @@ EXISTS`, portanto os teus dados mantêm-se.
 | Sintoma | O que fazer |
 |---|---|
 | `node` não é reconhecido | O Node não está instalado ou o PowerShell não foi reiniciado depois da instalação. |
+| Erro de `node-gyp` ou "could not find Visual Studio" | Versão antiga do projeto. Faz `git pull`, apaga a pasta `node_modules` e repete: o CRM já não usa dependências que precisem de compilação. |
 | A janela abre e fecha logo | Corre `esdev-crm.bat` a partir do PowerShell (`.\esdev-crm.bat`) para ler a mensagem de erro. |
 | "Porta 43127 já em uso" | Já tens o CRM a correr. Procura a janela "esDEV CRM (servidor)" ou termina o processo `node` no Gestor de Tarefas. |
 | O browser diz que não consegue ligar | O servidor ainda está a arrancar. Espera 10 segundos e recarrega. |

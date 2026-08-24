@@ -12,6 +12,8 @@ cd "$(dirname "$0")"
 
 PORTA=43127
 URL="http://localhost:${PORTA}"
+# O SQLite embutido no Node ainda é marcado como experimental; o aviso não interessa aqui.
+export NODE_OPTIONS="--disable-warning=ExperimentalWarning"
 
 if ! command -v node >/dev/null 2>&1; then
   echo "Node.js não encontrado. Instala a versão LTS em https://nodejs.org"

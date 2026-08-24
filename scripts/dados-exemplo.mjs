@@ -7,14 +7,14 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import Database from "better-sqlite3";
+import { DatabaseSync } from "node:sqlite";
 
 const raiz = process.cwd();
 const caminho = process.env.ESDEV_DB ?? path.join(raiz, "data", "esdev.db");
 fs.mkdirSync(path.dirname(caminho), { recursive: true });
 
-const db = new Database(caminho);
-db.pragma("foreign_keys = ON");
+const db = new DatabaseSync(caminho);
+db.exec("PRAGMA foreign_keys = ON");
 db.exec(fs.readFileSync(path.join(raiz, "db", "schema.sql"), "utf8"));
 
 const forcar = process.argv.includes("--forcar");
@@ -46,35 +46,40 @@ if (forcar) {
 const inserirLead = db.prepare(
   `INSERT INTO leads (empresa, contacto_nome, email, telefone, origem, fase, tipo_solucao,
                       orcamento_indicado, valor_estimado, notas)
-   VALUES (@empresa, @contacto, @email, @telefone, @origem, @fase, @tipo, @orcamento, @valor, @notas)`,
+   VALUES (?,?,?,?,?,?,?,?,?,?)`,
 );
 
 const inserirCliente = db.prepare(
   `INSERT INTO clientes (empresa, nif, contacto_nome, contacto_cargo, email, telefone, website)
-   VALUES (@empresa, @nif, @contacto, @cargo, @email, @telefone, @website)`,
+   VALUES (?,?,?,?,?,?,?)`,
 );
 
 const inserirProjeto = db.prepare(
   `INSERT INTO projetos (cliente_id, lead_id, nome, pacote, estado, preco, custos_externos,
                          horas_estimadas, horas_reais, inicio, entrega_prevista, checklist, notas)
-   VALUES (@cliente, @lead, @nome, @pacote, @estado, @preco, @custos, @horasEst, @horasReais,
-           @inicio, @entrega, @checklist, @notas)`,
+   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
 );
 
 const inserirFatura = db.prepare(
   `INSERT INTO faturas (projeto_id, cliente_id, descricao, tipo, valor, estado, emitida_em, paga_em)
-   VALUES (@projeto, @cliente, @descricao, @tipo, @valor, @estado, @emitida, @paga)`,
+   VALUES (?,?,?,?,?,?,?,?)`,
 );
 
 const inserirManutencao = db.prepare(
   `INSERT INTO manutencoes (cliente_id, projeto_id, plano, valor_mensal, estado, inicio, notas)
-   VALUES (@cliente, @projeto, @plano, @valor, 'Ativo', @inicio, @notas)`,
+   VALUES (?,?,?,?,'Ativo',?,?)`,
 );
 
 const inserirAnalise = db.prepare(
   `INSERT INTO analises (lead_id, titulo, inputs, preco_minimo, preco_recomendado, preco_premium,
                          mensalidade, plano_manutencao, horas_estimadas, valor_hora)
-   VALUES (@lead, @titulo, @inputs, @min, @rec, @prem, @mensalidade, @plano, @horas, @valorHora)`,
+   VALUES (?,?,?,?,?,?,?,?,?,?)`,
+);
+
+const inserirProposta = db.prepare(
+  `INSERT INTO propostas (lead_id, analise_id, nivel, valor, mensalidade, validade_dias, estado,
+                          ambito, exclusoes, rondas_alteracoes)
+   VALUES (?,?,?,?,?,?,?,?,?,?)`,
 );
 
 const inserirTarefa = db.prepare(
@@ -91,126 +96,132 @@ const complexidade = (v) => ({
   seo: v,
 });
 
-db.transaction(() => {
-  // §26 — PME de remodelações, classificada como Website Business.
-  const leadRemodelacoes = inserirLead.run({
-    empresa: "Remodelações Silva & Filhos",
-    contacto: "António Silva",
-    email: "geral@remodelacoessilva.pt",
-    telefone: "912 000 111",
-    origem: "Recomendação",
-    fase: "Projeto ativo",
-    tipo: "Website institucional",
-    orcamento: "2.000–5.000 €",
-    valor: 3360,
-    notas:
-      "Homepage, empresa, serviços, projetos, contactos, formulário, WhatsApp, Google Maps, galeria, SEO técnico e mobile.",
-  }).lastInsertRowid;
+// §26 — PME de remodelações, classificada como Website Business.
+const leadRemodelacoes = Number(
+  inserirLead.run(
+    "Remodelações Silva & Filhos",
+    "António Silva",
+    "geral@remodelacoessilva.pt",
+    "912 000 111",
+    "Recomendação",
+    "Projeto ativo",
+    "Website institucional",
+    "2.000–5.000 €",
+    3360,
+    "Homepage, empresa, serviços, projetos, contactos, formulário, WhatsApp, Google Maps, galeria, SEO técnico e mobile.",
+  ).lastInsertRowid,
+);
 
-  const clienteRemodelacoes = inserirCliente.run({
-    empresa: "Remodelações Silva & Filhos, Lda.",
-    nif: "500000000",
-    contacto: "António Silva",
-    cargo: "Sócio-gerente",
-    email: "geral@remodelacoessilva.pt",
-    telefone: "912 000 111",
-    website: "—",
-  }).lastInsertRowid;
+const clienteRemodelacoes = Number(
+  inserirCliente.run(
+    "Remodelações Silva & Filhos, Lda.",
+    "500000000",
+    "António Silva",
+    "Sócio-gerente",
+    "geral@remodelacoessilva.pt",
+    "912 000 111",
+    "—",
+  ).lastInsertRowid,
+);
 
-  db.prepare("UPDATE leads SET cliente_id=? WHERE id=?").run(clienteRemodelacoes, leadRemodelacoes);
+db.prepare("UPDATE leads SET cliente_id=? WHERE id=?").run(clienteRemodelacoes, leadRemodelacoes);
 
-  inserirAnalise.run({
-    lead: leadRemodelacoes,
-    titulo: "Website Business",
-    inputs: JSON.stringify({
-      pacoteId: "web-business",
-      extras: { "pagina-simples": 1, "seo-local": 1 },
-      complexidade: complexidade(3),
-      urgencia: 1,
-      risco: 2,
-      prioritario: false,
-      horasEstimadas: 56,
-      custosExternos: 0,
-      ajusteComercial: 0,
-    }),
-    min: 2440,
-    rec: 3360,
-    prem: 4410,
-    mensalidade: 160,
-    plano: "business",
-    horas: 56,
-    valorHora: 60,
-  });
+inserirAnalise.run(
+  leadRemodelacoes,
+  "Website Business",
+  JSON.stringify({
+    pacoteId: "web-business",
+    extras: { "pagina-simples": 1, "seo-local": 1 },
+    complexidade: complexidade(3),
+    urgencia: 1,
+    risco: 2,
+    prioritario: false,
+    horasEstimadas: 56,
+    custosExternos: 0,
+    ajusteComercial: 0,
+  }),
+  2440,
+  3360,
+  4410,
+  160,
+  "business",
+  56,
+  60,
+);
 
-  const projetoRemodelacoes = inserirProjeto.run({
-    cliente: clienteRemodelacoes,
-    lead: leadRemodelacoes,
-    nome: "Website Remodelações Silva",
-    pacote: "Website Business",
-    estado: "Desenvolvimento",
-    preco: 3360,
-    custos: 0,
-    horasEst: 56,
-    horasReais: 38,
-    inicio: "2026-08-04",
-    entrega: "2026-09-15",
-    checklist: JSON.stringify(["Formulários testados", "Mobile e desktop testados"]),
-    notas: "Cliente fornece textos e fotografias das obras.",
-  }).lastInsertRowid;
+const projetoRemodelacoes = Number(
+  inserirProjeto.run(
+    clienteRemodelacoes,
+    leadRemodelacoes,
+    "Website Remodelações Silva",
+    "Website Business",
+    "Desenvolvimento",
+    3360,
+    0,
+    56,
+    38,
+    "2026-08-04",
+    "2026-09-15",
+    JSON.stringify(["Formulários testados", "Mobile e desktop testados"]),
+    "Cliente fornece textos e fotografias das obras.",
+  ).lastInsertRowid,
+);
 
-  inserirFatura.run({
-    projeto: projetoRemodelacoes,
-    cliente: clienteRemodelacoes,
-    descricao: "Adjudicação (50%)",
-    tipo: "Adjudicação",
-    valor: 1680,
-    estado: "Paga",
-    emitida: "2026-08-04",
-    paga: "2026-08-06",
-  });
-  inserirFatura.run({
-    projeto: projetoRemodelacoes,
-    cliente: clienteRemodelacoes,
-    descricao: "Antes da entrega (50%)",
-    tipo: "Entrega final",
-    valor: 1680,
-    estado: "Pendente",
-    emitida: null,
-    paga: null,
-  });
+inserirFatura.run(
+  projetoRemodelacoes,
+  clienteRemodelacoes,
+  "Adjudicação (50%)",
+  "Adjudicação",
+  1680,
+  "Paga",
+  "2026-08-04",
+  "2026-08-06",
+);
+inserirFatura.run(
+  projetoRemodelacoes,
+  clienteRemodelacoes,
+  "Antes da entrega (50%)",
+  "Entrega final",
+  1680,
+  "Pendente",
+  null,
+  null,
+);
 
-  inserirManutencao.run({
-    cliente: clienteRemodelacoes,
-    projeto: projetoRemodelacoes,
-    plano: "business",
-    valor: 160,
-    inicio: "2026-09-15",
-    notas: "Inclui alojamento e uma hora mensal de alterações.",
-  });
+inserirManutencao.run(
+  clienteRemodelacoes,
+  projetoRemodelacoes,
+  "business",
+  160,
+  "2026-09-15",
+  "Inclui alojamento e duas horas mensais de alterações.",
+);
 
-  inserirTarefa.run(projetoRemodelacoes, "Aprovar design da homepage", "Concluída", "2026-08-12");
-  inserirTarefa.run(projetoRemodelacoes, "Integrar galeria de projetos", "Aberta", "2026-08-28");
-  inserirTarefa.run(projetoRemodelacoes, "Configurar Search Console", "Aberta", "2026-09-10");
+inserirTarefa.run(projetoRemodelacoes, "Aprovar design da homepage", "Concluída", "2026-08-12");
+inserirTarefa.run(projetoRemodelacoes, "Integrar galeria de projetos", "Aberta", "2026-08-28");
+inserirTarefa.run(projetoRemodelacoes, "Configurar Search Console", "Aberta", "2026-09-10");
 
-  // §27 — imobiliária, Website Pro com extras.
-  const leadImobiliaria = inserirLead.run({
-    empresa: "Imobiliária Costa Verde",
-    contacto: "Marta Costa",
-    email: "marta@costaverde.pt",
-    telefone: "934 555 222",
-    origem: "Website esDEV",
-    fase: "Proposta enviada",
-    tipo: "Website institucional",
-    orcamento: "5.000 €+",
-    valor: 9800,
-    notas:
-      "10 páginas, catálogo de imóveis, pesquisa, filtros, formulário, WhatsApp, multilingue, CMS, SEO local e integração externa.",
-  }).lastInsertRowid;
+// §27 — imobiliária, Website Pro com extras.
+const leadImobiliaria = Number(
+  inserirLead.run(
+    "Imobiliária Costa Verde",
+    "Marta Costa",
+    "marta@costaverde.pt",
+    "934 555 222",
+    "Website esDEV",
+    "Proposta enviada",
+    "Website institucional",
+    "5.000 €+",
+    9800,
+    "10 páginas, catálogo de imóveis, pesquisa, filtros, formulário, WhatsApp, multilingue, CMS, SEO local e integração externa.",
+  ).lastInsertRowid,
+);
 
-  const analiseImobiliaria = inserirAnalise.run({
-    lead: leadImobiliaria,
-    titulo: "Website Pro + sistema de imóveis",
-    inputs: JSON.stringify({
+const analiseImobiliaria = Number(
+  inserirAnalise.run(
+    leadImobiliaria,
+    "Website Pro + sistema de imóveis",
+    JSON.stringify({
       pacoteId: "web-pro",
       extras: {
         "pagina-sistema": 1,
@@ -228,45 +239,41 @@ db.transaction(() => {
       custosExternos: 0,
       ajusteComercial: 0,
     }),
-    min: 6990,
-    rec: 10060,
-    prem: 14270,
-    mensalidade: 540,
-    plano: "pro",
-    horas: 150,
-    valorHora: 67.1,
-  }).lastInsertRowid;
-
-  db.prepare(
-    `INSERT INTO propostas (lead_id, analise_id, nivel, valor, mensalidade, validade_dias, estado,
-                            ambito, exclusoes, rondas_alteracoes)
-     VALUES (?,?,?,?,?,?,?,?,?,?)`,
-  ).run(
-    leadImobiliaria,
-    analiseImobiliaria,
-    "BUSINESS",
-    9800,
+    6990,
+    10060,
+    14270,
     540,
-    30,
-    "Enviada",
-    "10 páginas, catálogo de imóveis com backoffice, pesquisa e filtros, multilingue PT/EN, CMS, SEO local e integração com portal externo.",
-    "Fotografia dos imóveis, tradução dos conteúdos, licenças de terceiros e alojamento do primeiro ano.",
-    2,
-  );
+    "pro",
+    150,
+    67.1,
+  ).lastInsertRowid,
+);
 
-  // Lead em fase inicial, sem briefing.
-  inserirLead.run({
-    empresa: "Clínica Dentária Nova",
-    contacto: "Dra. Rita Nunes",
-    email: "geral@clinicanova.pt",
-    telefone: "222 333 444",
-    origem: "Redes sociais",
-    fase: "Reunião marcada",
-    tipo: "Landing page / One-page",
-    orcamento: "500–1.000 €",
-    valor: 950,
-    notas: "Quer captar marcações. Reunião de discovery agendada.",
-  });
-})();
+inserirProposta.run(
+  leadImobiliaria,
+  analiseImobiliaria,
+  "BUSINESS",
+  9800,
+  540,
+  30,
+  "Enviada",
+  "10 páginas, catálogo de imóveis com backoffice, pesquisa e filtros, multilingue PT/EN, CMS, SEO local e integração com portal externo.",
+  "Fotografia dos imóveis, tradução dos conteúdos, licenças de terceiros e alojamento do primeiro ano.",
+  2,
+);
+
+// Lead em fase inicial, sem briefing.
+inserirLead.run(
+  "Clínica Dentária Nova",
+  "Dra. Rita Nunes",
+  "geral@clinicanova.pt",
+  "222 333 444",
+  "Redes sociais",
+  "Reunião marcada",
+  "Landing page / One-page",
+  "500–1.000 €",
+  950,
+  "Quer captar marcações. Reunião de discovery agendada.",
+);
 
 console.log(`Dados de exemplo inseridos em ${caminho}`);

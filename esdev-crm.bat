@@ -16,6 +16,8 @@ rem ---------------------------------------------------------------------------
 
 set PORTA=43127
 set URL=http://localhost:%PORTA%
+rem O SQLite embutido no Node ainda e marcado como experimental; o aviso nao interessa aqui.
+set NODE_OPTIONS=--disable-warning=ExperimentalWarning
 
 where node >nul 2>nul
 if errorlevel 1 (

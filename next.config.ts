@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["better-sqlite3"],
   /**
    * Em desenvolvimento o Next só serve os ficheiros de /_next a pedidos cuja
    * origem esteja declarada aqui — o resto recebe 403 e a página fica sem
