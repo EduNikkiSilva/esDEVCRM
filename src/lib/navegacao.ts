@@ -1,6 +1,7 @@
 import {
   BookOpen,
   CircleQuestionMark,
+  Settings,
   Calculator,
   FileText,
   FolderKanban,
@@ -99,6 +100,12 @@ export const NAVEGACAO: GrupoNav[] = [
         icon: CircleQuestionMark,
         descricao: "O fluxo de trabalho e as rotinas do sistema",
       },
+      {
+        href: "/definicoes",
+        label: "Definições",
+        icon: Settings,
+        descricao: "Logótipo e localização dos dados",
+      },
     ],
   },
 ];
@@ -117,6 +124,7 @@ const TITULOS: Record<string, string> = {
   "/manutencao": "Manutenção",
   "/referencias": "Referências",
   "/ajuda": "Como usar",
+  "/definicoes": "Definições",
 };
 
 export function tituloDaRota(pathname: string) {

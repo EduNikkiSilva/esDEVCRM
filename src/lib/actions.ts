@@ -1,9 +1,12 @@
 "use server";
 
+import fs from "node:fs";
+import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { executa, primeiro } from "@/lib/db";
 import { PLANOS_PAGAMENTO } from "@/lib/dominio";
+import { pastaDados } from "@/lib/logo";
 import { calcularPreco, type InputsCalculadora } from "@/lib/pricing";
 
 const texto = (fd: FormData, campo: string) => {
@@ -413,4 +416,47 @@ export async function guardarManutencao(fd: FormData) {
 export async function apagarManutencao(fd: FormData) {
   executa("DELETE FROM manutencoes WHERE id=?", numero(fd, "id"));
   refrescar("/", "/manutencao");
+}
+
+// --- Identidade / logótipo ---------------------------------------------------
+
+const TIPOS_LOGO: Record<string, string> = {
+  "image/svg+xml": "svg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/jpeg": "jpg",
+};
+
+const BASE_LOGO = (variante: string) => (variante === "escuro" ? "logo-branco" : "logo");
+
+/** Guarda o logótipo enviado junto da base de dados, para entrar nos backups. */
+export async function guardarLogotipo(fd: FormData) {
+  const ficheiro = fd.get("ficheiro");
+  if (!(ficheiro instanceof File) || ficheiro.size === 0) return;
+  if (ficheiro.size > 3 * 1024 * 1024) return;
+
+  const extensao = TIPOS_LOGO[ficheiro.type];
+  if (!extensao) return;
+
+  const base = BASE_LOGO(String(fd.get("variante")));
+  const pasta = pastaDados();
+  fs.mkdirSync(pasta, { recursive: true });
+  for (const ext of Object.values(TIPOS_LOGO)) {
+    const antigo = path.join(pasta, `${base}.${ext}`);
+    if (fs.existsSync(antigo)) fs.rmSync(antigo);
+  }
+  fs.writeFileSync(
+    path.join(pasta, `${base}.${extensao}`),
+    Buffer.from(await ficheiro.arrayBuffer()),
+  );
+  revalidatePath("/", "layout");
+}
+
+export async function removerLogotipo(fd: FormData) {
+  const base = BASE_LOGO(String(fd.get("variante")));
+  for (const ext of Object.values(TIPOS_LOGO)) {
+    const ficheiro = path.join(pastaDados(), `${base}.${ext}`);
+    if (fs.existsSync(ficheiro)) fs.rmSync(ficheiro);
+  }
+  revalidatePath("/", "layout");
 }
