@@ -88,6 +88,63 @@ Transversal à app:
    checklist de entrega.
 7. Entregue → o contrato de manutenção passa a contar na receita recorrente.
 
+## Fazer alterações
+
+O GitHub é o armazém e o canal de transporte; a edição é sempre em código. Há dois caminhos.
+
+### A. Tu, no teu computador
+
+```powershell
+cd "$env:USERPROFILE\Documents\esDEVCRM"
+git pull                 # começar sempre por aqui
+npm run dev              # http://localhost:43127, recarrega a cada gravação
+```
+
+O modo de desenvolvimento mostra as alterações no browser assim que gravas o ficheiro — é o
+melhor para mexer em design. Quando estiveres satisfeito:
+
+```powershell
+git add -A
+git commit -m "o que mudou"
+git push
+npm run build            # com o dev desligado
+```
+
+Não corras `npm run build` com o `npm run dev` ligado: partilham a pasta `.next` e a app fica
+sem JavaScript até reiniciares.
+
+### B. Um agente, a partir do repositório GitHub
+
+Abres um agente sobre `esDEVCRM`, descreves o que queres, ele trabalha numa branch e abre um
+pull request. Revês o diff no GitHub, fazes merge, e no teu PC:
+
+```powershell
+git pull
+npm install              # só se as dependências mudaram
+npm run build
+```
+
+### Onde mexer, por tipo de alteração
+
+| Queres mudar | Ficheiro |
+|---|---|
+| Cores, tipografia, arredondamentos, tema escuro | `src/app/globals.css` |
+| Tabelas de preços, extras, planos, fatores | `src/lib/pricing.ts` |
+| Fases do pipeline, briefing, checklists | `src/lib/dominio.ts` |
+| Barra lateral, navegação, barra superior | `src/components/barra-lateral.tsx`, `src/components/estrutura.tsx` |
+| Uma página concreta | `src/app/<nome>/page.tsx` |
+| Estrutura da base de dados | `db/schema.sql` |
+
+### Duas coisas a ter em conta
+
+**Os teus dados nunca são afetados.** A pasta `data/` está fora do Git, por isso um `git pull`
+ou um `git checkout` nunca mexe em leads, propostas ou faturas.
+
+**Colunas novas na base de dados precisam de migração.** O esquema é criado com
+`CREATE TABLE IF NOT EXISTS`, o que significa que tabelas novas aparecem sozinhas, mas uma
+coluna nova numa tabela que já existe **não**. Se uma alteração precisar disso, tem de vir
+acompanhada do `ALTER TABLE` correspondente — vale a pena dizê-lo no pedido ao agente.
+
 ## Trabalhar com GitHub
 
 O repositório deve ser **privado**: contém tabelas de preços, margens e posicionamento
