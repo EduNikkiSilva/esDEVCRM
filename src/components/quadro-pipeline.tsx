@@ -3,10 +3,11 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { GripVertical } from "lucide-react";
+import { AlarmClock, CalendarPlus, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { mudarFaseLead } from "@/lib/actions";
+import { agendarFollowUp, mudarFaseLead } from "@/lib/actions";
+import { hoje, somarDias } from "@/lib/datas";
 import { COR_FASE, type Fase } from "@/lib/dominio";
 import { data, eur } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,12 @@ export type LeadQuadro = {
   fase: string;
   valor_estimado: number;
   atualizado_em: string;
+  proxima?: { tipo: string; titulo: string; data: string } | null;
+  ultimoContacto?: string | null;
 };
+
+/** Dias de folga do follow-up rápido criado a partir do pipeline. */
+const DIAS_FOLLOW_UP = 3;
 
 export function QuadroPipeline({
   leads: leadsIniciais,
@@ -33,6 +39,14 @@ export function QuadroPipeline({
   const [alvo, setAlvo] = useState<string | null>(null);
   const [, iniciar] = useTransition();
   const router = useRouter();
+
+  const marcarFollowUp = (lead: LeadQuadro) => {
+    iniciar(async () => {
+      await agendarFollowUp(lead.id, somarDias(hoje(), DIAS_FOLLOW_UP));
+      toast.success(`Follow-up de ${lead.empresa} marcado para daqui a ${DIAS_FOLLOW_UP} dias`);
+      router.refresh();
+    });
+  };
 
   const largar = (fase: Fase, idDoEvento?: number) => {
     setAlvo(null);
@@ -124,9 +138,10 @@ export function QuadroPipeline({
                         {eur(l.valor_estimado)}
                       </Badge>
                       <span className="text-[10px] text-muted-foreground/70">
-                        {data(l.atualizado_em)}
+                        {l.ultimoContacto ? `contacto ${data(l.ultimoContacto)}` : data(l.atualizado_em)}
                       </span>
                     </div>
+                    <ProximaAcao lead={l} onMarcar={() => marcarFollowUp(l)} />
                   </article>
                 ))
               )}
@@ -134,6 +149,41 @@ export function QuadroPipeline({
           </section>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * §4.2 — o pipeline tem de dizer qual é a próxima ação. Sem nenhuma marcada, dá
+ * um atalho para criar o follow-up ali mesmo, sem abrir a lead.
+ */
+function ProximaAcao({ lead, onMarcar }: { lead: LeadQuadro; onMarcar: () => void }) {
+  if (lead.fase === "Perdido") return null;
+
+  if (!lead.proxima) {
+    return (
+      <button
+        type="button"
+        onClick={onMarcar}
+        className="mt-2 flex w-full items-center gap-1.5 rounded-lg border border-dashed border-warning/50 bg-warning/5 px-2 py-1.5 text-[11px] text-warning transition-colors hover:bg-warning/10"
+      >
+        <CalendarPlus className="size-3.5" /> Sem follow-up — marcar +{DIAS_FOLLOW_UP} dias
+      </button>
+    );
+  }
+
+  const atrasada = lead.proxima.data < hoje();
+  return (
+    <div
+      className={cn(
+        "mt-2 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px]",
+        atrasada ? "bg-destructive/10 text-destructive" : "bg-secondary text-muted-foreground",
+      )}
+    >
+      <AlarmClock className="size-3.5 shrink-0" />
+      <span className="truncate">
+        {lead.proxima.tipo} · {data(lead.proxima.data)}
+      </span>
     </div>
   );
 }

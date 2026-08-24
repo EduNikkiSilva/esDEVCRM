@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChecklistEntrega } from "@/components/checklist-entrega";
+import { TimelineAtividades } from "@/components/timeline-atividades";
 import { Campo, CampoSelect, PageHeader, Stat } from "@/components/ui-kit";
 import {
   alternarPagamento,
@@ -18,7 +19,7 @@ import {
 import { ESTADOS_PROJETO, TIPOS_FATURA } from "@/lib/dominio";
 import { data, eur, eur2 } from "@/lib/format";
 import { VALOR_HORA_ALVO, VALOR_HORA_INTERNO } from "@/lib/pricing";
-import { listarFaturas, listarTarefas, obterProjeto } from "@/lib/queries";
+import { listarAtividades, listarFaturas, listarTarefas, obterProjeto } from "@/lib/queries";
 
 // Lê a base de dados local a cada pedido.
 export const dynamic = "force-dynamic";
@@ -30,6 +31,7 @@ export default async function ProjetoPage({ params }: { params: Promise<{ id: st
 
   const faturas = await listarFaturas(projeto.id);
   const tarefas = await listarTarefas(projeto.id);
+  const atividades = await listarAtividades({ projetoId: projeto.id });
   const recebido = faturas.filter((f) => f.estado === "Paga").reduce((s, f) => s + f.valor, 0);
   const emFalta = faturas.filter((f) => f.estado === "Pendente").reduce((s, f) => s + f.valor, 0);
   const valorHora =
@@ -180,12 +182,24 @@ export default async function ProjetoPage({ params }: { params: Promise<{ id: st
                 <Campo nome="descricao" label="Descrição" placeholder="Trabalho adicional" />
                 <CampoSelect nome="tipo" label="Tipo" opcoes={TIPOS_FATURA} />
                 <Campo nome="valor" label="Valor (€)" tipo="number" step="10" />
-                <div className="flex items-end">
+                <Campo nome="emitida_em" label="Emissão" tipo="date" />
+                <Campo nome="vence_em" label="Vencimento" tipo="date" />
+                <div className="flex items-end sm:col-span-2">
                   <Button type="submit" variant="outline" className="w-full">
                     Adicionar
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent>
+              <TimelineAtividades
+                atividades={atividades}
+                alvo={{ projetoId: projeto.id, clienteId: projeto.cliente_id ?? undefined }}
+                titulo="Atividade do projeto"
+              />
             </CardContent>
           </Card>
         </div>

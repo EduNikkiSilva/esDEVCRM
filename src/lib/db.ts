@@ -73,6 +73,19 @@ const paraDolares = (sql: string) => {
   return sql.replace(/\?/g, () => `$${++n}`);
 };
 
+/**
+ * Instruções de `db/alteracoes.sql`, uma a uma. São ADD COLUMN e CREATE INDEX
+ * sobre tabelas que já podem existir sem essas colunas: falhar é o resultado
+ * normal quando já foram aplicadas, por isso o erro é ignorado.
+ */
+function alteracoes(): string[] {
+  return fs
+    .readFileSync(path.join(process.cwd(), "db", "alteracoes.sql"), "utf8")
+    .split(";")
+    .map((s) => s.replace(/--[^\n]*/g, "").trim())
+    .filter(Boolean);
+}
+
 
 
 async function pool(): Promise<Cliente> {
@@ -90,6 +103,13 @@ async function pool(): Promise<Cliente> {
         max: 5,
       });
       await p.query(fs.readFileSync(path.join(process.cwd(), "db", "schema.postgres.sql"), "utf8"));
+      for (const instrucao of alteracoes()) {
+        try {
+          await p.query(instrucao);
+        } catch {
+          // Coluna ou índice já existentes.
+        }
+      }
       return p as unknown as Cliente;
     })().catch((erro) => {
       globalThis.__esdevPg = undefined;
@@ -117,6 +137,13 @@ async function sqlite() {
     bd.exec("PRAGMA journal_mode = WAL");
     bd.exec("PRAGMA foreign_keys = ON");
     bd.exec(fs.readFileSync(path.join(process.cwd(), "db", "schema.sql"), "utf8"));
+    for (const instrucao of alteracoes()) {
+      try {
+        bd.exec(instrucao);
+      } catch {
+        // Coluna ou índice já existentes.
+      }
+    }
     globalThis.__esdevSqlite = bd;
   }
   return globalThis.__esdevSqlite;

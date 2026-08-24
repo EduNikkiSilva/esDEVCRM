@@ -92,6 +92,107 @@ export const ORIGENS_LEAD = [
   "Outro",
 ] as const;
 
+/** §4.1 — tipos de atividade da timeline. */
+export const TIPOS_ATIVIDADE = [
+  "Contacto",
+  "Chamada",
+  "Email",
+  "WhatsApp",
+  "Reunião",
+  "Follow-up",
+  "Nota",
+  "Proposta",
+  "Outro",
+] as const;
+
+export type TipoAtividade = (typeof TIPOS_ATIVIDADE)[number];
+
+/** Tipos que representam trabalho a fazer, e não registo do que já aconteceu. */
+export const TIPOS_ATIVIDADE_ACAO: readonly TipoAtividade[] = ["Follow-up", "Reunião", "Chamada"];
+
+export const COR_ATIVIDADE: Record<TipoAtividade, string> = {
+  Contacto: "bg-chart-2/10 text-chart-2 border-chart-2/25",
+  Chamada: "bg-chart-2/15 text-chart-2 border-chart-2/30",
+  Email: "bg-chart-1/10 text-chart-1 border-chart-1/25",
+  WhatsApp: "bg-chart-3/12 text-chart-3 border-chart-3/25",
+  Reunião: "bg-chart-4/15 text-chart-4 border-chart-4/30",
+  "Follow-up": "bg-chart-4/12 text-chart-4 border-chart-4/25",
+  Nota: "bg-muted text-muted-foreground border-border",
+  Proposta: "bg-chart-1/15 text-chart-1 border-chart-1/30",
+  Outro: "bg-muted text-muted-foreground border-border",
+};
+
+/** §4.6 — ciclo de vida da proposta. */
+export const ESTADOS_PROPOSTA = [
+  "Rascunho",
+  "Enviada",
+  "Visualizada",
+  "Negociação",
+  "Aceite",
+  "Recusada",
+  "Expirada",
+] as const;
+
+export type EstadoProposta = (typeof ESTADOS_PROPOSTA)[number];
+
+/** Propostas que ainda podem ser ganhas — usado no dashboard e nos KPIs. */
+export const ESTADOS_PROPOSTA_ABERTOS: readonly EstadoProposta[] = [
+  "Enviada",
+  "Visualizada",
+  "Negociação",
+];
+
+export const COR_PROPOSTA: Record<EstadoProposta, string> = {
+  Rascunho: "bg-muted text-muted-foreground border-border",
+  Enviada: "bg-chart-1/15 text-chart-1 border-chart-1/30",
+  Visualizada: "bg-chart-2/15 text-chart-2 border-chart-2/30",
+  Negociação: "bg-chart-4/15 text-chart-4 border-chart-4/30",
+  Aceite: "bg-chart-3/15 text-chart-3 border-chart-3/30",
+  Recusada: "bg-chart-5/10 text-chart-5 border-chart-5/25",
+  Expirada: "bg-chart-5/10 text-chart-5 border-chart-5/25",
+};
+
+/** §4.7 — estados do contrato. */
+export const ESTADOS_CONTRATO = ["Pendente", "Enviado", "Assinado", "Cancelado"] as const;
+
+/** §4.2 — motivos de perda, para saber porque se perdem negócios. */
+export const MOTIVOS_PERDA = [
+  "Preço",
+  "Sem resposta",
+  "Escolheu concorrente",
+  "Sem orçamento",
+  "Adiado pelo cliente",
+  "Fora do âmbito da esDEV",
+  "Outro",
+] as const;
+
+/** §4.9 / §4.10 — periodicidade da receita recorrente. */
+export const PERIODICIDADES = ["Mensal", "Trimestral", "Semestral", "Anual"] as const;
+
+export type Periodicidade = (typeof PERIODICIDADES)[number];
+
+/** Meses de cada ciclo, para normalizar tudo em MRR. */
+export const MESES_CICLO: Record<Periodicidade, number> = {
+  Mensal: 1,
+  Trimestral: 3,
+  Semestral: 6,
+  Anual: 12,
+};
+
+/** §4.10 — tipos de serviço recorrente. */
+export const TIPOS_SERVICO_RECORRENTE = [
+  "Domínio",
+  "Alojamento",
+  "Email",
+  "Manutenção",
+  "Suporte",
+  "SEO",
+  "Backups",
+  "Outro",
+] as const;
+
+export const ESTADOS_RECORRENTE = ["Ativo", "Suspenso", "Cancelado"] as const;
+
 export const TIPOS_FATURA = [
   "Adjudicação",
   "Marco intermédio",
@@ -102,6 +203,16 @@ export const TIPOS_FATURA = [
 ] as const;
 
 export const ESTADOS_FATURA = ["Pendente", "Paga", "Anulada"] as const;
+
+/**
+ * §4.8 — "Vencida" não é um estado guardado: é uma fatura pendente cuja data de
+ * vencimento já passou. Guardá-la implicaria uma tarefa periódica a mudar
+ * estados; derivá-la mantém a verdade só na data.
+ */
+export const estadoFatura = (fatura: { estado: string; vence_em: string | null }, hoje: string) =>
+  fatura.estado === "Pendente" && fatura.vence_em && fatura.vence_em < hoje
+    ? "Vencida"
+    : fatura.estado;
 
 /** §14 — planos de pagamento recomendados. */
 export const PLANOS_PAGAMENTO = [

@@ -10,28 +10,32 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PageHeader, Vazio } from "@/components/ui-kit";
-import { mudarEstadoProposta } from "@/lib/actions";
-import { data, eur } from "@/lib/format";
+import { PageHeader, Stat, Vazio } from "@/components/ui-kit";
+import { expirarPropostas, mudarEstadoProposta } from "@/lib/actions";
+import { diasAte } from "@/lib/datas";
+import {
+  COR_PROPOSTA,
+  ESTADOS_PROPOSTA,
+  ESTADOS_PROPOSTA_ABERTOS,
+  type EstadoProposta,
+} from "@/lib/dominio";
+import { data, eur, pct } from "@/lib/format";
 import { listarTodasPropostas } from "@/lib/queries";
-
-const COR_ESTADO: Record<string, string> = {
-  Rascunho: "bg-secondary text-foreground/80",
-  Enviada: "bg-violet-50 text-violet-700 border-violet-200",
-  Aceite: "bg-emerald-50 text-success border-emerald-200",
-  Recusada: "bg-rose-50 text-rose-700 border-rose-200",
-};
 
 // Lê a base de dados local a cada pedido.
 export const dynamic = "force-dynamic";
 
 export default async function PropostasPage() {
+  await expirarPropostas();
   const propostas = await listarTodasPropostas();
-  const enviadas = propostas.filter((p) => p.estado === "Enviada");
+
+  const abertas = propostas.filter((p) => ESTADOS_PROPOSTA_ABERTOS.includes(p.estado as EstadoProposta));
   const aceites = propostas.filter((p) => p.estado === "Aceite");
-  const taxa = propostas.length
-    ? Math.round((aceites.length / propostas.filter((p) => p.estado !== "Rascunho").length || 0) * 100)
-    : 0;
+  const decididas = propostas.filter((p) =>
+    ["Aceite", "Recusada", "Expirada"].includes(p.estado),
+  );
+  const taxa = decididas.length ? aceites.length / decididas.length : 0;
+  const valorAberto = abertas.reduce((s, p) => s + p.valor, 0);
 
   return (
     <>
@@ -51,13 +55,20 @@ export default async function PropostasPage() {
         </Vazio>
       ) : (
         <>
-          <div className="mb-6 flex flex-wrap gap-3 text-sm">
-            <Badge variant="outline">Total: {propostas.length}</Badge>
-            <Badge variant="outline">Em aberto: {enviadas.length}</Badge>
-            <Badge variant="outline">Aceites: {aceites.length}</Badge>
-            {Number.isFinite(taxa) ? (
-              <Badge variant="outline">Taxa de aceitação: {taxa}%</Badge>
-            ) : null}
+          <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Stat titulo="Total" valor={String(propostas.length)} />
+            <Stat
+              titulo="Em aberto"
+              valor={String(abertas.length)}
+              nota={`${eur(valorAberto)} à espera de resposta`}
+            />
+            <Stat titulo="Aceites" valor={String(aceites.length)} tom="bom" />
+            <Stat
+              titulo="Taxa de aceitação"
+              valor={pct(taxa)}
+              nota={`sobre ${decididas.length} decidida(s)`}
+              tom={taxa >= 0.4 ? "bom" : "neutro"}
+            />
           </div>
 
           <Card>
@@ -65,51 +76,86 @@ export default async function PropostasPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Nº</TableHead>
                     <TableHead>Lead</TableHead>
                     <TableHead>Nível</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
                     <TableHead className="text-right">Manutenção</TableHead>
-                    <TableHead>Criada</TableHead>
+                    <TableHead>Enviada</TableHead>
+                    <TableHead>Validade</TableHead>
                     <TableHead>Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {propostas.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell>
-                        <Link href={`/leads/${p.lead_id}`} className="font-medium hover:underline">
-                          {p.empresa}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{p.nivel}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums">{eur(p.valor)}</TableCell>
-                      <TableCell className="text-right tabular-nums text-muted-foreground">
-                        {eur(p.mensalidade)}/mês
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{data(p.criado_em)}</TableCell>
-                      <TableCell>
-                        <form action={mudarEstadoProposta} className="flex items-center gap-2">
-                          <input type="hidden" name="id" value={p.id} />
-                          <select
-                            name="estado"
-                            defaultValue={p.estado}
-                            className={`h-8 rounded-md border px-2 text-xs ${COR_ESTADO[p.estado] ?? ""}`}
-                          >
-                            {["Rascunho", "Enviada", "Aceite", "Recusada"].map((e) => (
-                              <option key={e} value={e}>
-                                {e}
-                              </option>
-                            ))}
-                          </select>
-                          <Button type="submit" size="sm" variant="ghost">
-                            Guardar
-                          </Button>
-                        </form>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {propostas.map((p) => {
+                    const dias = diasAte(p.expira_em);
+                    const aberta = ESTADOS_PROPOSTA_ABERTOS.includes(p.estado as EstadoProposta);
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell className="text-xs text-muted-foreground tabular-nums">
+                          {p.numero ?? "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Link href={`/leads/${p.lead_id}`} className="font-medium hover:underline">
+                            {p.empresa}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{p.nivel}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">{eur(p.valor)}</TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">
+                          {eur(p.mensalidade)}/mês
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {p.enviada_em ? data(p.enviada_em) : "—"}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {p.respondida_em ? (
+                            <span className="text-muted-foreground">
+                              resposta {data(p.respondida_em)}
+                            </span>
+                          ) : p.expira_em ? (
+                            <span
+                              className={
+                                aberta && dias !== null && dias <= 3
+                                  ? "font-medium text-destructive"
+                                  : "text-muted-foreground"
+                              }
+                            >
+                              {data(p.expira_em)}
+                              {aberta && dias !== null ? (
+                                <span className="block text-muted-foreground/70">
+                                  {dias < 0 ? `há ${-dias} dia(s)` : `faltam ${dias} dia(s)`}
+                                </span>
+                              ) : null}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground/70">{p.validade_dias} dias</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <form action={mudarEstadoProposta} className="flex items-center gap-2">
+                            <input type="hidden" name="id" value={p.id} />
+                            <select
+                              name="estado"
+                              defaultValue={p.estado}
+                              className={`h-8 rounded-md border px-2 text-xs ${COR_PROPOSTA[p.estado as EstadoProposta] ?? ""}`}
+                            >
+                              {ESTADOS_PROPOSTA.map((e) => (
+                                <option key={e} value={e}>
+                                  {e}
+                                </option>
+                              ))}
+                            </select>
+                            <Button type="submit" size="sm" variant="ghost">
+                              Guardar
+                            </Button>
+                          </form>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>

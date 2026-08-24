@@ -1,38 +1,101 @@
 import Link from "next/link";
 import {
+  AlarmClock,
   ArrowRight,
   BadgeEuro,
+  CalendarCheck,
   Clock,
+  FileText,
   FolderKanban,
   Gauge,
+  Percent,
   Receipt,
   Repeat,
+  Target,
   TriangleAlert,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ListaAtividades } from "@/components/atividades-hoje";
 import { GraficoFaturacao } from "@/components/graficos-dashboard";
 import { PageHeader, Stat, Vazio } from "@/components/ui-kit";
-import { COR_FASE, FASES, REGRAS_DE_OURO, type Fase } from "@/lib/dominio";
-import { data, eur, eur2 } from "@/lib/format";
+import { expirarPropostas } from "@/lib/actions";
+import { diasAte } from "@/lib/datas";
+import {
+  COR_FASE,
+  COR_PROPOSTA,
+  FASES,
+  REGRAS_DE_OURO,
+  type EstadoProposta,
+  type Fase,
+} from "@/lib/dominio";
+import { data, eur, eur2, pct } from "@/lib/format";
 import { VALOR_HORA_ALVO, VALOR_HORA_INTERNO } from "@/lib/pricing";
-import { contagemPorFase, faturacaoMensal, indicadores, listarFaturas } from "@/lib/queries";
+import {
+  atividadesAtrasadas,
+  atividadesDoDia,
+  contagemPorFase,
+  faturacaoMensal,
+  faturasVencidas,
+  indicadores,
+  indicadoresComerciais,
+  listarFaturas,
+  projetosEmRisco,
+  propostasAbertas,
+  receitaPeriodo,
+  recorrencia,
+  renovacoesProximas,
+} from "@/lib/queries";
 
 // Lê a base de dados local a cada pedido.
 export const dynamic = "force-dynamic";
 
 export default async function Dashboard() {
-  const ind = await indicadores();
-  const fases = await contagemPorFase();
-  const faturacao = await faturacaoMensal();
-  const faturas = (await listarFaturas()) as (Awaited<ReturnType<typeof listarFaturas>>[number] & {
-    cliente?: string | null;
-    projeto?: string | null;
-  })[];
+  // Sem tarefas agendadas, o dashboard é o momento natural para fechar propostas
+  // cuja validade passou — senão ficavam eternamente "Enviada".
+  await expirarPropostas();
+
+  const [
+    ind,
+    comercial,
+    receita,
+    recorrente,
+    fases,
+    faturacao,
+    faturas,
+    hojeAtividades,
+    atrasadas,
+    vencidas,
+    propostas,
+    risco,
+    renovacoes,
+  ] = await Promise.all([
+    indicadores(),
+    indicadoresComerciais(),
+    receitaPeriodo(),
+    recorrencia(),
+    contagemPorFase(),
+    faturacaoMensal(),
+    listarFaturas() as Promise<
+      (Awaited<ReturnType<typeof listarFaturas>>[number] & {
+        cliente?: string | null;
+        projeto?: string | null;
+      })[]
+    >,
+    atividadesDoDia(),
+    atividadesAtrasadas(),
+    faturasVencidas(),
+    propostasAbertas(),
+    projetosEmRisco(),
+    renovacoesProximas(45),
+  ]);
+
   const pendentes = faturas.filter((f) => f.estado === "Pendente").slice(0, 6);
   const maiorFase = Math.max(1, ...FASES.map((f) => fases.get(f)?.n ?? 0));
   const temDados = faturacao.some((m) => m.recebido > 0 || m.pendente > 0);
+  const totalVencido = vencidas.reduce((s, f) => s + f.valor, 0);
+  const porFazer = hojeAtividades.length + atrasadas.length;
 
   return (
     <>
@@ -47,6 +110,97 @@ export default async function Dashboard() {
           <Link href="/leads">Abrir pipeline</Link>
         </Button>
       </PageHeader>
+
+      <section className="mb-4 grid gap-4 lg:grid-cols-3">
+        <Card className="cartao-suave lg:col-span-2">
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <CalendarCheck className="size-4 text-primary" /> Hoje
+                {porFazer > 0 ? (
+                  <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
+                    {porFazer}
+                  </Badge>
+                ) : null}
+              </CardTitle>
+              <Button asChild size="sm" variant="ghost">
+                <Link href="/leads">
+                  Pipeline <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              O que está marcado para hoje e o que ficou para trás.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <ListaAtividades
+              atividades={hojeAtividades}
+              vazio="Nada marcado para hoje."
+            />
+            {atrasadas.length > 0 ? (
+              <>
+                <p className="mt-4 mb-1 flex items-center gap-2 text-xs font-semibold tracking-wide text-destructive uppercase">
+                  <AlarmClock className="size-3.5" /> Atrasadas · {atrasadas.length}
+                </p>
+                <ListaAtividades atividades={atrasadas} atrasadas vazio="" />
+              </>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card className="cartao-suave">
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <FileText className="size-4" /> Propostas em aberto
+              </CardTitle>
+              <Button asChild size="sm" variant="ghost">
+                <Link href="/propostas">
+                  Ver <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {propostas.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Sem propostas à espera de resposta.</p>
+            ) : (
+              <ul className="divide-y divide-border/60">
+                {propostas.slice(0, 6).map((p) => {
+                  const dias = diasAte(p.expira_em);
+                  return (
+                    <li key={p.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <div className="min-w-0">
+                        <Link
+                          href={`/leads/${p.lead_id}`}
+                          className="truncate text-sm font-medium hover:underline"
+                        >
+                          {p.empresa}
+                        </Link>
+                        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Badge
+                            variant="outline"
+                            className={`px-1.5 py-0 text-[10px] ${COR_PROPOSTA[p.estado as EstadoProposta]}`}
+                          >
+                            {p.estado}
+                          </Badge>
+                          {dias === null
+                            ? "sem validade"
+                            : dias < 0
+                              ? `expirou há ${-dias} dia(s)`
+                              : `expira em ${dias} dia(s)`}
+                        </p>
+                      </div>
+                      <span className="num shrink-0 text-sm font-semibold">{eur(p.valor)}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <Stat
@@ -70,9 +224,9 @@ export default async function Dashboard() {
           icone={Clock}
         />
         <Stat
-          titulo="Receita recorrente"
-          valor={`${eur(ind.mrr.total)}/mês`}
-          nota={`${ind.mrr.n} contrato(s) · ${eur(ind.mrr.total * 12)}/ano`}
+          titulo="MRR"
+          valor={`${eur(recorrente.mrr)}/mês`}
+          nota={`ARR ${eur(recorrente.arr)} · ${recorrente.contratos} serviço(s)`}
           tom="bom"
           icone={Repeat}
         />
@@ -83,6 +237,152 @@ export default async function Dashboard() {
           icone={Gauge}
         />
       </section>
+
+      <section className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <Stat
+          titulo="Vencido"
+          valor={eur(totalVencido)}
+          nota={`${vencidas.length} fatura(s) fora de prazo`}
+          tom={totalVencido > 0 ? "mau" : "bom"}
+          icone={AlarmClock}
+        />
+        <Stat
+          titulo="Receita do mês"
+          valor={eur(receita.mes)}
+          nota={`${eur(receita.ano)} no ano`}
+          icone={BadgeEuro}
+        />
+        <Stat
+          titulo="Ticket médio"
+          valor={eur(comercial.ticketMedio)}
+          nota={`${comercial.propostas} proposta(s) criadas`}
+          icone={Target}
+        />
+        <Stat
+          titulo="Taxa de conversão"
+          valor={pct(comercial.conversao)}
+          nota={`${comercial.ganhos} ganhas · ${comercial.perdidos} perdidas`}
+          tom={comercial.conversao >= 0.3 ? "bom" : "neutro"}
+          icone={Percent}
+        />
+        <Stat
+          titulo="Aceitação de propostas"
+          valor={pct(comercial.aceitacao)}
+          nota={`${comercial.propostasAceites} de ${comercial.propostas}`}
+          tom={comercial.aceitacao >= 0.4 ? "bom" : "neutro"}
+          icone={FileText}
+        />
+      </section>
+
+      {vencidas.length > 0 || risco.length > 0 || renovacoes.length > 0 ? (
+        <section className="mt-4 grid gap-4 lg:grid-cols-3">
+          <Card className="cartao-suave">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <AlarmClock className="size-4 text-destructive" /> Faturas vencidas
+                </CardTitle>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href="/faturas?filtro=vencidas">
+                    Ver <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {vencidas.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma fatura fora de prazo.</p>
+              ) : (
+                <ul className="divide-y divide-border/60">
+                  {vencidas.slice(0, 6).map((f) => (
+                    <li key={f.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{f.descricao}</p>
+                        <p className="truncate text-xs text-destructive">
+                          {f.cliente ?? "Sem cliente"} · venceu {data(f.vence_em)}
+                        </p>
+                      </div>
+                      <span className="num shrink-0 text-sm font-semibold">{eur(f.valor)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="cartao-suave">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <TriangleAlert className="size-4 text-warning" /> Projetos em risco
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Entrega no passado ou horas acima do estimado.
+              </p>
+            </CardHeader>
+            <CardContent>
+              {risco.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum projeto em risco.</p>
+              ) : (
+                <ul className="divide-y divide-border/60">
+                  {risco.slice(0, 6).map((p) => (
+                    <li key={p.id} className="py-2.5">
+                      <Link
+                        href={`/projetos/${p.id}`}
+                        className="truncate text-sm font-medium hover:underline"
+                      >
+                        {p.nome}
+                      </Link>
+                      <p className="text-xs text-muted-foreground">
+                        {p.estado}
+                        {p.entrega_prevista ? ` · entrega ${data(p.entrega_prevista)}` : ""}
+                        {p.horas_estimadas > 0 && p.horas_reais > p.horas_estimadas
+                          ? ` · ${p.horas_reais}h de ${p.horas_estimadas}h`
+                          : ""}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="cartao-suave">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Repeat className="size-4" /> Próximas renovações
+                </CardTitle>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href="/manutencao">
+                    Ver <ArrowRight className="size-4" />
+                  </Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {renovacoes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Sem renovações nos próximos 45 dias.</p>
+              ) : (
+                <ul className="divide-y divide-border/60">
+                  {renovacoes.slice(0, 6).map((r) => (
+                    <li key={r.id} className="flex items-center justify-between gap-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{r.cliente ?? "Sem cliente"}</p>
+                        <p
+                          className={`truncate text-xs ${r.atrasada ? "text-destructive" : "text-muted-foreground"}`}
+                        >
+                          {r.tipo} · {data(r.renovacao)}
+                        </p>
+                      </div>
+                      <span className="num shrink-0 text-sm font-semibold">{eur(r.valor)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+      ) : null}
 
       <section className="mt-4 grid gap-4 lg:grid-cols-3">
         <Card className="cartao-suave lg:col-span-2">

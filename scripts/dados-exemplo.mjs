@@ -24,8 +24,8 @@ if (forcar) {
 }
 
 const SQL_INSERIR_LEAD = `INSERT INTO leads (empresa, contacto_nome, email, telefone, origem, fase, tipo_solucao,
-                      orcamento_indicado, valor_estimado, notas)
-   VALUES (?,?,?,?,?,?,?,?,?,?)`;
+                      orcamento_indicado, valor_estimado, notas, responsavel)
+   VALUES (?,?,?,?,?,?,?,?,?,?,'Eduardo')`;
 
 const SQL_INSERIR_CLIENTE = `INSERT INTO clientes (empresa, nif, contacto_nome, contacto_cargo, email, telefone, website)
    VALUES (?,?,?,?,?,?,?)`;
@@ -34,19 +34,36 @@ const SQL_INSERIR_PROJETO = `INSERT INTO projetos (cliente_id, lead_id, nome, pa
                          horas_estimadas, horas_reais, inicio, entrega_prevista, checklist, notas)
    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
-const SQL_INSERIR_FATURA = `INSERT INTO faturas (projeto_id, cliente_id, descricao, tipo, valor, estado, emitida_em, paga_em)
-   VALUES (?,?,?,?,?,?,?,?)`;
+const SQL_INSERIR_FATURA = `INSERT INTO faturas (projeto_id, cliente_id, descricao, tipo, valor, estado, emitida_em, vence_em, paga_em)
+   VALUES (?,?,?,?,?,?,?,?,?)`;
 
-const SQL_INSERIR_MANUTENCAO = `INSERT INTO manutencoes (cliente_id, projeto_id, plano, valor_mensal, estado, inicio, notas)
-   VALUES (?,?,?,?,'Ativo',?,?)`;
+const SQL_INSERIR_MANUTENCAO = `INSERT INTO manutencoes (cliente_id, projeto_id, plano, valor_mensal, estado, inicio, ciclo, renovacao, notas)
+   VALUES (?,?,?,?,'Ativo',?,?,?,?)`;
+
+const SQL_INSERIR_CONTACTO = `INSERT INTO contactos (cliente_id, nome, cargo, email, telefone, principal)
+   VALUES (?,?,?,?,?,?)`;
+
+const SQL_INSERIR_ATIVIDADE = `INSERT INTO atividades (lead_id, cliente_id, projeto_id, tipo, titulo, descricao, data, hora, concluida, concluida_em)
+   VALUES (?,?,?,?,?,?,?,?,?,?)`;
+
+const SQL_INSERIR_SERVICO = `INSERT INTO servicos_recorrentes (cliente_id, projeto_id, tipo, descricao, fornecedor, custo, preco, periodicidade, inicio, renovacao, estado)
+   VALUES (?,?,?,?,?,?,?,?,?,?,'Ativo')`;
+
+/** Datas relativas a hoje, para os exemplos nunca ficarem desatualizados. */
+const dias = (n) => {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const HOJE = dias(0);
 
 const SQL_INSERIR_ANALISE = `INSERT INTO analises (lead_id, titulo, inputs, preco_minimo, preco_recomendado, preco_premium,
                          mensalidade, plano_manutencao, horas_estimadas, valor_hora)
    VALUES (?,?,?,?,?,?,?,?,?,?)`;
 
-const SQL_INSERIR_PROPOSTA = `INSERT INTO propostas (lead_id, analise_id, nivel, valor, mensalidade, validade_dias, estado,
-                          ambito, exclusoes, rondas_alteracoes)
-   VALUES (?,?,?,?,?,?,?,?,?,?)`;
+const SQL_INSERIR_PROPOSTA = `INSERT INTO propostas (lead_id, analise_id, numero, nivel, valor, mensalidade, validade_dias, estado,
+                          ambito, exclusoes, condicoes, rondas_alteracoes, enviada_em, expira_em)
+   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
 const SQL_INSERIR_TAREFA = "INSERT INTO tarefas (projeto_id, titulo, estado, prazo) VALUES (?,?,?,?)";
 
@@ -134,34 +151,129 @@ const projetoRemodelacoes = Number(
   )).lastInsertRowid,
 );
 
-await db.executa(SQL_INSERIR_FATURA, 
+await db.executa(SQL_INSERIR_FATURA,
   projetoRemodelacoes,
   clienteRemodelacoes,
   "Adjudicação (50%)",
   "Adjudicação",
   1260,
   "Paga",
-  "2026-08-04",
-  "2026-08-06",
+  dias(-40),
+  dias(-10),
+  dias(-38),
 );
-await db.executa(SQL_INSERIR_FATURA, 
+// Vencida de propósito: é assim que se vê o alerta de cobrança a funcionar.
+await db.executa(SQL_INSERIR_FATURA,
   projetoRemodelacoes,
   clienteRemodelacoes,
-  "Antes da entrega (50%)",
-  "Entrega final",
-  1260,
+  "Marco intermédio (25%)",
+  "Marco intermédio",
+  630,
   "Pendente",
+  dias(-35),
+  dias(-5),
+  null,
+);
+await db.executa(SQL_INSERIR_FATURA,
+  projetoRemodelacoes,
+  clienteRemodelacoes,
+  "Antes da entrega (25%)",
+  "Entrega final",
+  630,
+  "Pendente",
+  null,
   null,
   null,
 );
 
-await db.executa(SQL_INSERIR_MANUTENCAO, 
+await db.executa(SQL_INSERIR_MANUTENCAO,
   clienteRemodelacoes,
   projetoRemodelacoes,
   "business",
   120,
-  "2026-09-15",
+  dias(-30),
+  "Mensal",
+  dias(12),
   "Inclui alojamento e 1,5h mensais de alterações.",
+);
+
+await db.executa(SQL_INSERIR_CONTACTO,
+  clienteRemodelacoes,
+  "António Silva",
+  "Sócio-gerente",
+  "geral@remodelacoessilva.pt",
+  "912 000 111",
+  1,
+);
+await db.executa(SQL_INSERIR_CONTACTO,
+  clienteRemodelacoes,
+  "Sofia Silva",
+  "Administrativa",
+  "administracao@remodelacoessilva.pt",
+  "912 000 112",
+  0,
+);
+
+await db.executa(SQL_INSERIR_SERVICO,
+  clienteRemodelacoes,
+  projetoRemodelacoes,
+  "Domínio",
+  "remodelacoessilva.pt",
+  "Cloudflare",
+  12,
+  35,
+  "Anual",
+  dias(-300),
+  dias(20),
+);
+await db.executa(SQL_INSERIR_SERVICO,
+  clienteRemodelacoes,
+  projetoRemodelacoes,
+  "Alojamento",
+  "Plano partilhado",
+  "Hetzner",
+  6,
+  25,
+  "Mensal",
+  dias(-30),
+  dias(5),
+);
+
+await db.executa(SQL_INSERIR_ATIVIDADE,
+  leadRemodelacoes,
+  clienteRemodelacoes,
+  null,
+  "Reunião",
+  "Kick-off do projeto",
+  "Âmbito confirmado e acessos pedidos.",
+  dias(-38),
+  "10:00",
+  1,
+  dias(-38),
+);
+await db.executa(SQL_INSERIR_ATIVIDADE,
+  leadRemodelacoes,
+  clienteRemodelacoes,
+  projetoRemodelacoes,
+  "Follow-up",
+  "Cobrar marco intermédio em atraso",
+  "Fatura vencida há dias; enviar lembrete por email.",
+  dias(-2),
+  null,
+  0,
+  null,
+);
+await db.executa(SQL_INSERIR_ATIVIDADE,
+  leadRemodelacoes,
+  clienteRemodelacoes,
+  projetoRemodelacoes,
+  "Chamada",
+  "Confirmar textos das obras",
+  null,
+  HOJE,
+  "15:30",
+  0,
+  null,
 );
 
 await db.executa(SQL_INSERIR_TAREFA, projetoRemodelacoes, "Aprovar design da homepage", "Concluída", "2026-08-12");
@@ -218,31 +330,90 @@ const analiseImobiliaria = Number(
   )).lastInsertRowid,
 );
 
-await db.executa(SQL_INSERIR_PROPOSTA, 
+await db.executa(SQL_INSERIR_PROPOSTA,
   leadImobiliaria,
   analiseImobiliaria,
+  `P${HOJE.slice(0, 4)}-001`,
   "BUSINESS",
   7400,
   150,
   30,
-  "Enviada",
+  "Negociação",
   "10 páginas, catálogo de imóveis com backoffice, pesquisa e filtros, multilingue PT/EN, CMS, SEO local e integração com portal externo.",
   "Fotografia dos imóveis, tradução dos conteúdos, licenças de terceiros e alojamento do primeiro ano.",
+  "40/30/30. Dois blocos de alterações incluídos. Prazo de 8 semanas após entrega de conteúdos.",
   2,
+  dias(-9),
+  dias(21),
+);
+
+await db.executa(SQL_INSERIR_ATIVIDADE,
+  leadImobiliaria,
+  null,
+  null,
+  "Proposta",
+  "Proposta BUSINESS enviada",
+  "Enviada por email com as três opções.",
+  dias(-9),
+  null,
+  1,
+  dias(-9),
+);
+await db.executa(SQL_INSERIR_ATIVIDADE,
+  leadImobiliaria,
+  null,
+  null,
+  "Follow-up",
+  "Ligar sobre a proposta",
+  "Pediram para rever o valor do catálogo de imóveis.",
+  HOJE,
+  "11:00",
+  0,
+  null,
 );
 
 // Lead em fase inicial, sem briefing.
-await db.executa(SQL_INSERIR_LEAD, 
-  "Clínica Dentária Nova",
-  "Dra. Rita Nunes",
-  "geral@clinicanova.pt",
-  "222 333 444",
-  "Redes sociais",
-  "Reunião marcada",
+const leadClinica = Number(
+  (await db.executa(
+    SQL_INSERIR_LEAD,
+    "Clínica Dentária Nova",
+    "Dra. Rita Nunes",
+    "geral@clinicanova.pt",
+    "222 333 444",
+    "Redes sociais",
+    "Reunião marcada",
+    "Landing page / One-page",
+    "500–1.000 €",
+    750,
+    "Quer captar marcações. Reunião de discovery agendada.",
+  )).lastInsertRowid,
+);
+
+await db.executa(SQL_INSERIR_ATIVIDADE,
+  leadClinica,
+  null,
+  null,
+  "Reunião",
+  "Discovery inicial",
+  "Perceber objetivos e volume de marcações.",
+  dias(2),
+  "09:30",
+  0,
+  null,
+);
+
+// Lead deixada sem próxima ação, para o alerta "Sem follow-up" ter matéria.
+await db.executa(SQL_INSERIR_LEAD,
+  "Padaria do Largo",
+  "Joana Matos",
+  "joana@padariadolargo.pt",
+  "961 777 888",
+  "Contacto direto",
+  "Contactado",
   "Landing page / One-page",
-  "500–1.000 €",
-  750,
-  "Quer captar marcações. Reunião de discovery agendada.",
+  "Menos de 500 €",
+  480,
+  "Contactou pelo Instagram. Sem resposta desde então.",
 );
 
 console.log(`Dados de exemplo inseridos em ${db.etiqueta}`);

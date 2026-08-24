@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Campo, CampoSelect, PageHeader } from "@/components/ui-kit";
 import { criarLead } from "@/lib/actions";
+import { hoje } from "@/lib/datas";
 import { FAIXAS_ORCAMENTO, FASES, ORIGENS_LEAD, TIPOS_SOLUCAO } from "@/lib/dominio";
 
 export default function NovaLeadPage() {
@@ -39,6 +40,13 @@ export default function NovaLeadPage() {
               tipo="number"
               step="10"
               valor={0}
+            />
+            <Campo nome="responsavel" label="Responsável" placeholder="Eduardo" />
+            <Campo
+              nome="primeiro_contacto"
+              label="Primeiro contacto a fazer"
+              tipo="date"
+              valor={hoje()}
             />
             <div className="sm:col-span-2">
               <Campo nome="notas" label="Notas" area placeholder="Contexto do primeiro contacto…" />

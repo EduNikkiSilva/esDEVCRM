@@ -14,6 +14,9 @@ export async function GET() {
   const projetos = await consulta<{ id: number; nome: string; estado: string }>(
     "SELECT id, nome, estado FROM projetos ORDER BY id DESC LIMIT 40",
   );
+  const contactos = await consulta<{ cliente_id: number; nome: string; cargo: string | null }>(
+    `SELECT cliente_id, nome, cargo FROM contactos ORDER BY ${semAcento("nome")} LIMIT 40`,
+  );
 
   return NextResponse.json({
     resultados: [
@@ -34,6 +37,12 @@ export async function GET() {
         titulo: p.nome,
         nota: p.estado,
         href: `/projetos/${p.id}`,
+      })),
+      ...contactos.map((c) => ({
+        grupo: "Contactos",
+        titulo: c.nome,
+        nota: c.cargo ?? "Contacto",
+        href: `/clientes/${c.cliente_id}`,
       })),
     ],
   });

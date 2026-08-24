@@ -9,22 +9,40 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Campo, PageHeader, Vazio } from "@/components/ui-kit";
+import { Campo, PageHeader, Stat, Vazio } from "@/components/ui-kit";
 import { guardarCliente } from "@/lib/actions";
-import { listarClientes } from "@/lib/queries";
+import { data, eur } from "@/lib/format";
+import { listarClientesComResumo } from "@/lib/queries";
 
 // Lê a base de dados local a cada pedido.
 export const dynamic = "force-dynamic";
 
 export default async function ClientesPage() {
-  const clientes = await listarClientes();
+  const clientes = await listarClientesComResumo();
+  const faturado = clientes.reduce((s, c) => s + c.faturado, 0);
+  const recorrente = clientes.reduce((s, c) => s + c.recorrente, 0);
+  const semAcompanhamento = clientes.filter((c) => !c.proxima_atividade).length;
 
   return (
     <>
       <PageHeader
         titulo="Clientes"
-        descricao="Dados de faturação e contacto. Um cliente é criado automaticamente quando uma lead é convertida em projeto."
+        descricao="Cada cliente é uma relação, não um registo: quanto já faturou, quanto falta receber, que receita recorrente gera e quando foi o último contacto."
       />
+
+      {clientes.length > 0 ? (
+        <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Stat titulo="Clientes" valor={String(clientes.length)} />
+          <Stat titulo="Faturado" valor={eur(faturado)} nota="Histórico total" />
+          <Stat titulo="Receita recorrente" valor={`${eur(recorrente)}/mês`} tom="bom" />
+          <Stat
+            titulo="Sem próxima ação"
+            valor={String(semAcompanhamento)}
+            tom={semAcompanhamento ? "alerta" : "bom"}
+            nota="Clientes sem nada marcado"
+          />
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <Card>
@@ -38,10 +56,12 @@ export default async function ClientesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Empresa</TableHead>
-                    <TableHead>NIF</TableHead>
                     <TableHead>Contacto</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Telefone</TableHead>
+                    <TableHead className="text-right">Faturado</TableHead>
+                    <TableHead className="text-right">Em falta</TableHead>
+                    <TableHead className="text-right">Recorrente</TableHead>
+                    <TableHead>Último contacto</TableHead>
+                    <TableHead>Próxima ação</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -51,11 +71,37 @@ export default async function ClientesPage() {
                         <Link href={`/clientes/${c.id}`} className="font-medium hover:underline">
                           {c.empresa}
                         </Link>
+                        <span className="block text-xs text-muted-foreground">
+                          {c.projetos} projeto(s)
+                          {c.nif ? ` · NIF ${c.nif}` : ""}
+                        </span>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{c.nif ?? "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{c.contacto_nome ?? "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{c.email ?? "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{c.telefone ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {c.contacto_nome ?? "—"}
+                        {c.email ? <span className="block text-xs">{c.email}</span> : null}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">{eur(c.faturado)}</TableCell>
+                      <TableCell
+                        className={`text-right tabular-nums ${c.vencido > 0 ? "font-medium text-destructive" : "text-muted-foreground"}`}
+                      >
+                        {eur(c.pendente)}
+                        {c.vencido > 0 ? (
+                          <span className="block text-xs">{eur(c.vencido)} vencido</span>
+                        ) : null}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {c.recorrente > 0 ? `${eur(c.recorrente)}/mês` : "—"}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {c.ultima_atividade ? data(c.ultima_atividade) : "—"}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {c.proxima_atividade ? (
+                          <span className="text-muted-foreground">{data(c.proxima_atividade)}</span>
+                        ) : (
+                          <span className="text-warning">sem follow-up</span>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

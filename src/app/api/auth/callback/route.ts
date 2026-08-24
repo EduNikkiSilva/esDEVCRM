@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ipDoPedido, registarAcesso } from "@/lib/acessos";
 import { authConfigurada, emailPermitido, segredoSessao } from "@/lib/auth";
 import { COOKIE_SESSAO, DIAS_SESSAO, assinarSessao } from "@/lib/sessao";
 
@@ -51,11 +52,29 @@ export async function GET(pedido: Request) {
     return falhar("id-token-invalido");
   }
 
-  if (!perfil.email_verified || !emailPermitido(perfil.email)) return falhar("sem-permissao");
+  if (!perfil.email_verified || !emailPermitido(perfil.email)) {
+    await registarAcesso("recusado", {
+      email: perfil.email,
+      ip: ipDoPedido(pedido),
+      agente: pedido.headers.get("user-agent"),
+    });
+    return falhar("sem-permissao");
+  }
+
+  await registarAcesso("entrada", {
+    email: perfil.email,
+    ip: ipDoPedido(pedido),
+    agente: pedido.headers.get("user-agent"),
+  });
 
   const exp = Date.now() + DIAS_SESSAO * 24 * 60 * 60 * 1000;
   const cookie = await assinarSessao(
-    { email: perfil.email!.toLowerCase(), nome: perfil.name ?? perfil.email!, exp },
+    {
+      email: perfil.email!.toLowerCase(),
+      nome: perfil.name ?? perfil.email!,
+      exp,
+      ult: Date.now(),
+    },
     segredoSessao(),
   );
 

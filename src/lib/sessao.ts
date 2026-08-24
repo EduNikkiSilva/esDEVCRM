@@ -6,9 +6,26 @@
  * verificação usa Web Crypto para funcionar tanto no servidor como no middleware.
  */
 export const COOKIE_SESSAO = "esdev_sessao";
+
+/** Duração máxima de uma sessão, mesmo com uso contínuo. */
 export const DIAS_SESSAO = 30;
 
-export type Sessao = { email: string; nome: string; exp: number };
+/** Fim de sessão por inatividade. Configurável em MINUTOS_INATIVIDADE. */
+export const MINUTOS_INATIVIDADE = Number(process.env.MINUTOS_INATIVIDADE ?? 30);
+
+/** Só voltamos a assinar o cookie a partir deste tempo, para não o fazer a cada pedido. */
+export const MINUTOS_RENOVACAO = 5;
+
+export type Sessao = {
+  email: string;
+  nome: string;
+  /** Fim absoluto da sessão. */
+  exp: number;
+  /** Última atividade, em milissegundos. */
+  ult: number;
+};
+
+export type Estado = { sessao: Sessao; renovar: boolean } | null;
 
 const codificador = new TextEncoder();
 
@@ -61,8 +78,22 @@ export async function lerSessao(cookie: string | undefined, segredo: string) {
   try {
     const sessao = JSON.parse(new TextDecoder().decode(deBase64Url(corpo))) as Sessao;
     if (!sessao.exp || sessao.exp < Date.now()) return null;
+    // Sessões antigas não trazem "ult": tratamo-las como inativas, para o novo
+    // limite de inatividade não ser contornável por um cookie anterior.
+    if (typeof sessao.ult !== "number") return null;
+    if (Date.now() - sessao.ult > MINUTOS_INATIVIDADE * 60 * 1000) return null;
     return sessao;
   } catch {
     return null;
   }
+}
+
+/** Verifica a sessão e diz se o cookie deve ser reemitido com atividade nova. */
+export async function estadoSessao(
+  cookie: string | undefined,
+  segredo: string,
+): Promise<Estado> {
+  const sessao = await lerSessao(cookie, segredo);
+  if (!sessao) return null;
+  return { sessao, renovar: Date.now() - sessao.ult > MINUTOS_RENOVACAO * 60 * 1000 };
 }

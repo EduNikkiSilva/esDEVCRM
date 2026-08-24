@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LockKeyhole, TriangleAlert } from "lucide-react";
+import { Clock, LockKeyhole, TriangleAlert } from "lucide-react";
 import { LogoEsdev } from "@/components/logotipo";
 import { Card, CardContent } from "@/components/ui/card";
 import { EMAILS_PERMITIDOS, authConfigurada, sessaoAtual } from "@/lib/auth";
+import { logotipos } from "@/lib/logo";
+import { MINUTOS_INATIVIDADE } from "@/lib/sessao";
 
 export const metadata = { title: "Entrar" };
 export const dynamic = "force-dynamic";
@@ -20,20 +22,27 @@ const ERROS: Record<string, string> = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string; para?: string; saiu?: string }>;
+  searchParams: Promise<{ erro?: string; para?: string; saiu?: string; expirou?: string }>;
 }) {
-  const { erro, para, saiu } = await searchParams;
+  const { erro, para, saiu, expirou } = await searchParams;
 
   // Já autenticado, ou autenticação desligada (modo local): não há nada aqui.
   if (!authConfigurada() || (await sessaoAtual())) redirect(para ?? "/");
 
   const destino = `/api/auth/google?para=${encodeURIComponent(para ?? "/")}`;
+  const logos = await logotipos();
 
   return (
     <div className="mx-auto flex min-h-[70vh] w-full max-w-md flex-col justify-center">
-      <div className="mb-8 flex justify-center">
-        <LogoEsdev tagline className="h-14 text-[#0a1b4d] dark:text-white" />
-      </div>
+      {/* Clicar no logótipo recarrega a raiz: é o gesto natural para voltar ao início. */}
+      <Link href="/" className="mb-8 flex justify-center transition-opacity hover:opacity-80">
+        {logos.claro ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logos.claro} alt="esDEV" className="h-14 w-auto" />
+        ) : (
+          <LogoEsdev tagline className="h-14 text-[#0a1b4d] dark:text-white" />
+        )}
+      </Link>
 
       <Card>
         <CardContent className="space-y-5 py-2">
@@ -59,6 +68,13 @@ export default async function LoginPage({
           {saiu ? (
             <p className="rounded-lg border border-border bg-muted/50 p-3 text-sm text-muted-foreground">
               Sessão terminada.
+            </p>
+          ) : null}
+
+          {expirou ? (
+            <p className="flex items-start gap-2 rounded-lg border border-border bg-muted/50 p-3 text-sm text-muted-foreground">
+              <Clock className="mt-0.5 size-4 shrink-0" />
+              A sessão expirou por inatividade. Entra outra vez para continuares.
             </p>
           ) : null}
 
@@ -89,7 +105,8 @@ export default async function LoginPage({
           </Link>
 
           <p className="text-xs text-muted-foreground">
-            A sessão fica ativa 30 dias neste dispositivo. Não há registo público desta página.
+            A sessão fecha após {MINUTOS_INATIVIDADE} minutos sem atividade e dura no máximo 30
+            dias. Todas as entradas ficam registadas.
           </p>
         </CardContent>
       </Card>

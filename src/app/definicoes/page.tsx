@@ -1,13 +1,17 @@
-import { Trash2, Upload } from "lucide-react";
+import { ShieldCheck, Trash2, Upload } from "lucide-react";
 import { LogoEsdev } from "@/components/logotipo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/ui-kit";
+import { Badge } from "@/components/ui/badge";
+import { ultimosAcessos } from "@/lib/acessos";
 import { guardarLogotipo, removerLogotipo } from "@/lib/actions";
 import { caminhoBaseDados } from "@/lib/db";
+import { data } from "@/lib/format";
 import { logotipos } from "@/lib/logo";
+import { MINUTOS_INATIVIDADE } from "@/lib/sessao";
 
 export const metadata = { title: "Definições" };
 
@@ -31,6 +35,7 @@ const VARIANTES = [
 
 export default async function DefinicoesPage() {
   const logos = await logotipos();
+  const acessos = await ultimosAcessos();
 
   return (
     <>
@@ -98,6 +103,62 @@ export default async function DefinicoesPage() {
           );
         })}
       </section>
+
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <ShieldCheck className="size-4 text-success" /> Segurança
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            O que está ativo neste momento nesta instalação.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <ul className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
+            <li>Entrada só com a conta Google autorizada.</li>
+            <li>Sessão fecha após {MINUTOS_INATIVIDADE} minutos sem atividade.</li>
+            <li>Cookie assinado, httpOnly e restrito a HTTPS.</li>
+            <li>HTTPS obrigatório, com HSTS de dois anos.</li>
+            <li>Fora dos motores de busca (robots e X-Robots-Tag).</li>
+            <li>Incorporação em iframes bloqueada.</li>
+          </ul>
+
+          <div>
+            <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Últimos acessos
+            </p>
+            {acessos.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Ainda sem registos. Aparecem aqui as entradas, saídas e tentativas recusadas.
+              </p>
+            ) : (
+              <ul className="divide-y divide-border/60">
+                {acessos.map((a) => (
+                  <li key={a.id} className="flex flex-wrap items-center gap-2 py-2 text-sm">
+                    <Badge
+                      variant="outline"
+                      className={
+                        a.resultado === "recusado"
+                          ? "border-destructive/30 bg-destructive/10 text-destructive"
+                          : ""
+                      }
+                    >
+                      {a.resultado}
+                    </Badge>
+                    <span className="font-medium">{a.email ?? "—"}</span>
+                    <span className="text-xs text-muted-foreground">{data(a.quando)}</span>
+                    {a.ip ? (
+                      <span className="ml-auto font-mono text-xs text-muted-foreground">
+                        {a.ip}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="mt-4">
         <CardHeader>

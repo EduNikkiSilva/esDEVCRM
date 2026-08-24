@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BriefingForm } from "@/components/briefing-form";
 import { CalculadoraPrecos } from "@/components/calculadora-precos";
+import { TimelineAtividades } from "@/components/timeline-atividades";
 import { Campo, CampoSelect, PageHeader, Vazio } from "@/components/ui-kit";
 import {
   apagarLead,
@@ -15,19 +16,31 @@ import {
   converterEmProjeto,
   criarProposta,
   mudarEstadoProposta,
+  registarPerda,
 } from "@/lib/actions";
+import { diasAte } from "@/lib/datas";
 import {
   COR_FASE,
+  COR_PROPOSTA,
+  ESTADOS_PROPOSTA,
   FAIXAS_ORCAMENTO,
   FASES,
+  MOTIVOS_PERDA,
   ORIGENS_LEAD,
   PLANOS_PAGAMENTO,
   TIPOS_SOLUCAO,
+  type EstadoProposta,
   type Fase,
 } from "@/lib/dominio";
 import { data, eur, eur2 } from "@/lib/format";
 import { NIVEIS_PROPOSTA, type InputsCalculadora } from "@/lib/pricing";
-import { listarAnalises, listarPropostas, obterBriefing, obterLead } from "@/lib/queries";
+import {
+  listarAnalises,
+  listarAtividades,
+  listarPropostas,
+  obterBriefing,
+  obterLead,
+} from "@/lib/queries";
 
 // Lê a base de dados local a cada pedido.
 export const dynamic = "force-dynamic";
@@ -41,9 +54,14 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const analises = await listarAnalises(lead.id);
   const ultima = analises[0];
   const propostas = await listarPropostas(lead.id);
+  const atividades = await listarAtividades({ leadId: lead.id });
   const inputsIniciais = ultima
     ? (JSON.parse(ultima.inputs) as InputsCalculadora)
     : undefined;
+
+  const proxima = atividades.find((a) => !a.concluida);
+  const ultimoContacto = atividades.find((a) => a.concluida);
+  const diasProxima = diasAte(proxima?.data);
 
   return (
     <>
@@ -56,16 +74,25 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
         </Button>
       </PageHeader>
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-4">
+      <div className="mb-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <Info rotulo="Contacto" valor={lead.contacto_nome ?? "—"} />
         <Info rotulo="Email" valor={lead.email ?? "—"} />
         <Info rotulo="Telefone" valor={lead.telefone ?? "—"} />
         <Info rotulo="Valor estimado" valor={eur(lead.valor_estimado)} />
+        <Info rotulo="Último contacto" valor={ultimoContacto ? data(ultimoContacto.data) : "—"} />
+        <Info
+          rotulo="Próxima ação"
+          valor={proxima ? `${proxima.titulo} · ${data(proxima.data)}` : "Sem follow-up"}
+          tom={!proxima ? "alerta" : diasProxima !== null && diasProxima < 0 ? "mau" : "normal"}
+        />
       </div>
 
       <Tabs defaultValue="dados">
         <TabsList className="mb-4 flex-wrap">
           <TabsTrigger value="dados">Dados</TabsTrigger>
+          <TabsTrigger value="atividade">
+            Atividade ({atividades.length})
+          </TabsTrigger>
           <TabsTrigger value="briefing">Briefing</TabsTrigger>
           <TabsTrigger value="preco">Análise &amp; preço</TabsTrigger>
           <TabsTrigger value="propostas">Propostas ({propostas.length})</TabsTrigger>
@@ -109,6 +136,14 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                   step="10"
                   valor={lead.valor_estimado}
                 />
+                <Campo nome="responsavel" label="Responsável" valor={lead.responsavel} />
+                <CampoSelect
+                  nome="motivo_perda"
+                  label="Motivo de perda"
+                  opcoes={MOTIVOS_PERDA}
+                  valor={lead.motivo_perda}
+                  vazioLabel="—"
+                />
                 <div className="sm:col-span-2">
                   <Campo nome="notas" label="Notas" area valor={lead.notas} />
                 </div>
@@ -116,6 +151,24 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                   <Button type="submit">Guardar</Button>
                 </div>
               </form>
+
+              {lead.fase !== "Perdido" ? (
+                <>
+                  <Separator className="my-6" />
+                  <form action={registarPerda} className="flex flex-wrap items-end gap-3">
+                    <input type="hidden" name="id" value={lead.id} />
+                    <CampoSelect
+                      nome="motivo_perda"
+                      label="Marcar como perdida — motivo"
+                      opcoes={MOTIVOS_PERDA}
+                      className="min-w-56"
+                    />
+                    <Button type="submit" variant="outline" size="sm">
+                      Registar perda
+                    </Button>
+                  </form>
+                </>
+              ) : null}
 
               <Separator className="my-6" />
               <form action={apagarLead}>
@@ -126,6 +179,14 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
               </form>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="atividade">
+          <TimelineAtividades
+            atividades={atividades}
+            alvo={{ leadId: lead.id, clienteId: lead.cliente_id ?? undefined }}
+            titulo="Histórico e próximas ações"
+          />
         </TabsContent>
 
         <TabsContent value="briefing">
@@ -213,6 +274,18 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                           area
                           placeholder="Conteúdos, fotografia, licenças…"
                         />
+                        <Campo
+                          nome="condicoes"
+                          label="Condições"
+                          area
+                          placeholder="Pagamento, prazos, responsabilidades do cliente…"
+                        />
+                        <Campo
+                          nome="observacoes"
+                          label="Observações internas"
+                          area
+                          placeholder="Notas que não vão para o cliente."
+                        />
                         <div className="grid grid-cols-2 gap-3">
                           <Campo
                             nome="rondas_alteracoes"
@@ -247,11 +320,21 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                 <ul className="divide-y divide-border/60">
                   {propostas.map((p) => (
                     <li key={p.id} className="flex flex-wrap items-center gap-3 py-3">
+                      {p.numero ? (
+                        <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                          {p.numero}
+                        </span>
+                      ) : null}
                       <Badge variant="outline">{p.nivel}</Badge>
+                      <Badge variant="outline" className={COR_PROPOSTA[p.estado as EstadoProposta]}>
+                        {p.estado}
+                      </Badge>
                       <span className="font-semibold tabular-nums">{eur(p.valor)}</span>
                       <span className="text-xs text-muted-foreground">
-                        {eur(p.mensalidade)}/mês · {p.rondas_alteracoes} rondas · válida{" "}
-                        {p.validade_dias} dias · criada {data(p.criado_em)}
+                        {eur(p.mensalidade)}/mês · {p.rondas_alteracoes} rondas
+                        {p.enviada_em ? ` · enviada ${data(p.enviada_em)}` : ""}
+                        {p.expira_em ? ` · expira ${data(p.expira_em)}` : ` · válida ${p.validade_dias} dias`}
+                        {p.respondida_em ? ` · resposta ${data(p.respondida_em)}` : ""}
                       </span>
                       <form action={mudarEstadoProposta} className="ml-auto flex items-center gap-2">
                         <input type="hidden" name="id" value={p.id} />
@@ -260,7 +343,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                           defaultValue={p.estado}
                           className="h-8 rounded-md border border-border px-2 text-xs"
                         >
-                          {["Rascunho", "Enviada", "Aceite", "Recusada"].map((e) => (
+                          {ESTADOS_PROPOSTA.map((e) => (
                             <option key={e} value={e}>
                               {e}
                             </option>
@@ -350,11 +433,27 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   );
 }
 
-function Info({ rotulo, valor }: { rotulo: string; valor: string }) {
+const TOM_INFO = {
+  normal: "border-border bg-card",
+  alerta: "border-warning/40 bg-warning/5",
+  mau: "border-destructive/40 bg-destructive/5",
+} as const;
+
+function Info({
+  rotulo,
+  valor,
+  tom = "normal",
+}: {
+  rotulo: string;
+  valor: string;
+  tom?: keyof typeof TOM_INFO;
+}) {
   return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2">
+    <div className={`rounded-lg border px-3 py-2 ${TOM_INFO[tom]}`}>
       <p className="text-[11px] tracking-wide text-muted-foreground uppercase">{rotulo}</p>
-      <p className="truncate text-sm font-medium">{valor}</p>
+      <p className="truncate text-sm font-medium" title={valor}>
+        {valor}
+      </p>
     </div>
   );
 }

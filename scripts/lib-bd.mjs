@@ -17,6 +17,14 @@ const paraDolares = (sql) => {
 
 const precisaReturning = (sql) => /^\s*insert\s/i.test(sql) && !/returning/i.test(sql);
 
+/** Ver db/alteracoes.sql: ADD COLUMN/CREATE INDEX idempotentes, erros ignorados. */
+const alteracoes = () =>
+  fs
+    .readFileSync(path.join(raiz, "db", "alteracoes.sql"), "utf8")
+    .split(";")
+    .map((s) => s.replace(/--[^\n]*/g, "").trim())
+    .filter(Boolean);
+
 export async function abrir() {
   if (usaPostgres) {
     const { Pool } = await import("pg");
@@ -25,6 +33,11 @@ export async function abrir() {
       ssl: /localhost|127\.0\.0\.1/.test(urlPostgres) ? undefined : { rejectUnauthorized: false },
     });
     await pool.query(fs.readFileSync(path.join(raiz, "db", "schema.postgres.sql"), "utf8"));
+    for (const instrucao of alteracoes()) {
+      try {
+        await pool.query(instrucao);
+      } catch {}
+    }
 
     return {
       etiqueta: urlPostgres.replace(/:[^:@/]+@/, ":•••@"),
@@ -46,6 +59,11 @@ export async function abrir() {
   const db = new DatabaseSync(caminho);
   db.exec("PRAGMA foreign_keys = ON");
   db.exec(fs.readFileSync(path.join(raiz, "db", "schema.sql"), "utf8"));
+  for (const instrucao of alteracoes()) {
+    try {
+      db.exec(instrucao);
+    } catch {}
+  }
 
   return {
     etiqueta: caminho,
@@ -57,6 +75,10 @@ export async function abrir() {
 }
 
 export const TABELAS = [
+  "atividades",
+  "contratos",
+  "servicos_recorrentes",
+  "contactos",
   "tarefas",
   "faturas",
   "manutencoes",

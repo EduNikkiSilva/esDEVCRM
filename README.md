@@ -56,15 +56,15 @@ A base de dados é criada automaticamente no primeiro arranque. Para a guardar n
 
 | Página | O que faz |
 |---|---|
-| **Dashboard** | Pipeline aberto, recebido, em falta, receita recorrente, projetos ativos, rentabilidade real (§29) e regras de ouro (§25). |
-| **Pipeline** | Quadro com as 12 fases do §24, de Novo Lead a Manutenção, com valor por coluna. |
-| **Lead** | Cinco separadores: dados, briefing completo do §5, análise interna + calculadora, propostas e conversão em projeto. |
+| **Dashboard** | Bloco *Hoje* com as ações do dia e as atrasadas, propostas em aberto, faturas vencidas, projetos em risco, próximas renovações, KPIs comerciais (ticket médio, conversão, aceitação) e financeiros (recebido, em falta, MRR, ARR, receita do mês). |
+| **Pipeline** | Quadro com as 12 fases do §24 e, em cada cartão, a próxima ação. Sem follow-up marcado, o cartão avisa e permite criar um ali mesmo. Filtros *Sem follow-up* e *Follow-ups atrasados*. |
+| **Lead** | Seis separadores: dados (com responsável e motivo de perda), timeline de atividades, briefing do §5, análise interna + calculadora, propostas e conversão em projeto. |
 | **Calculadora** | Pacote base (§8) + extras (§9) + complexidade (§6) + urgência + risco + custos externos → mínimo, recomendado, premium e mensalidade sugerida. |
-| **Propostas** | Todas as propostas, estado (rascunho / enviada / aceite / recusada) e taxa de aceitação. |
-| **Clientes** | Dados de faturação, projetos, faturas e manutenção por cliente. |
-| **Projetos** | Fase de desenvolvimento (§16), horas estimadas vs reais, €/h efetivo, checklist de entrega (§17), tarefas e faturas do projeto. |
-| **Faturação** | Marcos de pagamento, trabalho adicional e custos de terceiros; pago vs pendente. |
-| **Manutenção** | Contratos recorrentes, planos Basic/Business/Pro e receita mensal e anualizada. |
+| **Propostas** | Numeração `PAAAA-NNN`, ciclo completo (rascunho, enviada, visualizada, negociação, aceite, recusada, expirada), datas de envio, resposta e expiração, e taxa de aceitação sobre propostas decididas. |
+| **Cliente 360** | Separadores Resumo, Atividade, Projetos, Financeiro, Manutenção e Documentos: faturado, recebido, em falta, vencido, MRR/ARR, contactos da empresa, propostas, serviços recorrentes e contratos. |
+| **Projetos** | Fase de desenvolvimento (§16), horas estimadas vs reais, €/h efetivo, checklist de entrega (§17), tarefas, faturas com prazo e timeline de atividades. |
+| **Faturação** | Marcos de pagamento, trabalho adicional e custos de terceiros, com data de vencimento. Uma fatura pendente fora de prazo aparece como *Vencida*. |
+| **Manutenção** | Planos de manutenção e serviços recorrentes (domínio, alojamento, email, SEO, suporte) com custo, preço, margem, ciclo e renovação; MRR, ARR e alertas de renovação. |
 | **Referências** | As tabelas do documento sempre à mão: preços, mercado, extras, planos, processo, contrato, checklists. |
 
 Transversal à app:
@@ -73,22 +73,27 @@ Transversal à app:
 - **Paleta de comandos** com `Ctrl+K`: salta para qualquer página, lead, cliente ou projeto.
 - **Pipeline com arrastar-e-largar**: mover um cartão entre colunas muda a fase da lead e
   grava logo na base de dados.
+- **Atividades como espinha dorsal**: cada contacto, chamada, reunião ou follow-up fica na
+  timeline da lead, do cliente e do projeto. As pendentes alimentam o bloco *Hoje*.
 - **Responsivo**: em telemóvel a barra lateral vira painel deslizante, útil para consultar uma
   lead numa reunião.
 
 ### O fluxo pensado para o dia a dia
 
-1. Entra um contacto → **Nova lead** (fase *Novo Lead*).
-2. Reunião → preencher o **briefing** no separador do lead. A barra mostra quanto falta.
+0. Abrir o **Dashboard**: o bloco *Hoje* diz o que há para fazer e o que ficou atrasado.
+1. Entra um contacto → **Nova lead** (fase *Novo Lead*), já com a data do primeiro contacto.
+2. Reunião → registar a atividade na **timeline** e preencher o **briefing** do lead.
 3. **Análise & preço**: mexer nos pacotes, extras e nas notas de 1 a 5. Guardar fixa os três
    escalões na lead e atualiza o valor estimado.
 4. **Propostas**: criar Essential, Business ou Premium a partir da análise, com âmbito,
    exclusões e rondas de alterações. Marcar como *Enviada* move a lead no pipeline.
-5. Proposta aceite → **Converter em projeto**: cria o cliente, o projeto, as faturas do plano
-   de pagamento escolhido (50/50 ou 40/30/30) e o contrato de manutenção.
+5. Proposta aceite → é criado um **contrato** em estado *Pendente* e a lead pode ser
+   **convertida em projeto**: cria o cliente, o projeto, as faturas do plano de pagamento
+   escolhido (50/50 ou 40/30/30) e o plano de manutenção.
 6. Durante o projeto: registar horas reais, avançar a fase, marcar faturas pagas e fechar a
    checklist de entrega.
-7. Entregue → o contrato de manutenção passa a contar na receita recorrente.
+7. Entregue → o plano de manutenção e os serviços recorrentes passam a contar no MRR, com
+   renovações a avisar no dashboard.
 
 ## Acesso online e autenticação
 
@@ -109,6 +114,26 @@ EMAILS_PERMITIDOS=geral@esdev.pt
 
 Enquanto estas variáveis não existirem, a aplicação fica aberta — é o modo local — e a barra
 lateral mostra um aviso a dizer que não deve ser publicada assim.
+
+### O que está ativo
+
+| Medida | Detalhe |
+|---|---|
+| Entrada | Conta Google, restrita a `EMAILS_PERMITIDOS` |
+| Inatividade | Sessão fecha após 30 minutos sem uso (`MINUTOS_INATIVIDADE`) |
+| Duração máxima | 30 dias, mesmo com uso contínuo |
+| Renovação | Deslizante: cada utilização adia o fim por inatividade |
+| Cookie | Assinado com HMAC-SHA256, `httpOnly`, `secure`, `sameSite=lax` |
+| HTTPS | Obrigatório, com HSTS de dois anos |
+| Motores de busca | `robots.txt` e `X-Robots-Tag: noindex` |
+| Incorporação | Bloqueada (`X-Frame-Options` e `frame-ancestors 'none'`) |
+| Formulários | `form-action` limitado ao próprio site e ao Google |
+| Permissões do browser | Câmara, microfone e localização negados |
+| Registo de acessos | Entradas, saídas e tentativas recusadas, com IP, visíveis em Definições |
+
+O registo de acessos responde a uma pergunta que de outra forma não tem resposta: alguém
+tentou entrar na área reservada? Uma tentativa recusada aparece a vermelho, com o email que a
+fez e o endereço de onde veio.
 
 Para verificar a proteção: `npm run teste-autenticacao`. Arranca o servidor com credenciais de
 teste e confirma que todas as páginas ficam fechadas sem sessão, que um cookie assinado com
@@ -220,7 +245,8 @@ npm run build
 | Fases do pipeline, briefing, checklists | `src/lib/dominio.ts` |
 | Barra lateral, navegação, barra superior | `src/components/barra-lateral.tsx`, `src/components/estrutura.tsx` |
 | Uma página concreta | `src/app/<nome>/page.tsx` |
-| Estrutura da base de dados | `db/schema.sql` |
+| Estrutura da base de dados | `db/schema.sql` e `db/schema.postgres.sql` |
+| Colunas novas em tabelas antigas | `db/alteracoes.sql` |
 
 ### Duas coisas a ter em conta
 
@@ -229,8 +255,10 @@ ou um `git checkout` nunca mexe em leads, propostas ou faturas.
 
 **Colunas novas na base de dados precisam de migração.** O esquema é criado com
 `CREATE TABLE IF NOT EXISTS`, o que significa que tabelas novas aparecem sozinhas, mas uma
-coluna nova numa tabela que já existe **não**. Se uma alteração precisar disso, tem de vir
-acompanhada do `ALTER TABLE` correspondente — vale a pena dizê-lo no pedido ao agente.
+coluna nova numa tabela que já existe **não**. Para isso existe o `db/alteracoes.sql`: cada
+`ALTER TABLE … ADD COLUMN` e `CREATE INDEX` é executado uma instrução por vez no arranque, nos
+dois motores, e os erros de "já existe" são ignorados. Uma coluna nova tem de ser acrescentada
+em **três** sítios: nos dois schemas (para bases novas) e no `alteracoes.sql` (para as antigas).
 
 ## Trabalhar com GitHub
 
@@ -391,10 +419,13 @@ src/app/             páginas (App Router, Server Components)
 src/components/      calculadora, briefing, quadro de pipeline, gráficos, navegação e UI
 src/lib/pricing.ts   motor de preços — tabelas de pacotes, extras e fatores
 src/lib/mercado.ts   faixas de mercado e fontes usadas na calibração
-src/lib/dominio.ts   pipeline, briefing, checklists e regras do documento
-src/lib/db.ts        ligação SQLite local
+src/lib/dominio.ts   pipeline, atividades, propostas, recorrência, checklists e regras
+src/lib/datas.ts     aritmética de datas ISO, ciclos de renovação e MRR mensalizado
+src/lib/db.ts        ligação SQLite local ou PostgreSQL, e aplicação do esquema
+src/lib/queries.ts   leituras: timeline, Cliente 360, KPIs, vencimentos e recorrência
 src/lib/actions.ts   escritas (Server Actions)
-db/schema.sql        esquema da base de dados
+db/schema.sql        esquema da base de dados (SQLite)
+db/alteracoes.sql    colunas e índices acrescentados a bases já existentes
 scripts/             dados de exemplo e gerador da calculadora em Excel
 ```
 
