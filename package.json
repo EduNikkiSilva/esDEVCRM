@@ -9,7 +9,8 @@
     "lint": "eslint",
     "dados-exemplo": "node scripts/dados-exemplo.mjs",
     "calculadora-excel": "python scripts/gerar_calculadora.py Calculadora_Precos_esDEV.xlsx",
-    "teste-interface": "node scripts/teste-interface.mjs"
+    "teste-interface": "node scripts/teste-interface.mjs",
+    "limpar-dados": "node scripts/limpar-dados.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

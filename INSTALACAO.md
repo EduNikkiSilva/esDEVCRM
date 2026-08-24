@@ -182,7 +182,7 @@ EXISTS`, portanto os teus dados mantêm-se.
 | A janela abre e fecha logo | Corre `esdev-crm.bat` a partir do PowerShell (`.\esdev-crm.bat`) para ler a mensagem de erro. |
 | "Porta 43127 já em uso" | Já tens o CRM a correr. Procura a janela "esDEV CRM (servidor)" ou termina o processo `node` no Gestor de Tarefas. |
 | O browser diz que não consegue ligar | O servidor ainda está a arrancar. Espera 10 segundos e recarrega. |
-| Quero começar do zero | Fecha o CRM, apaga a pasta `data`, arranca outra vez. Cria uma base de dados vazia. |
+| Quero começar do zero | `npm run limpar-dados -- --sim` dentro da pasta. Apaga todos os registos e mantém o logótipo. |
 | Quero os exemplos outra vez | `npm run dados-exemplo -- --forcar` (apaga o que existe e insere os exemplos). |
 
 ---
