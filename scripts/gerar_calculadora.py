@@ -53,16 +53,18 @@ thin = Side(style="thin", color="BFBFBF")
 box = Border(left=thin, right=thin, top=thin, bottom=thin)
 
 # --- Dados do modelo ---------------------------------------------------------
+# Tarifas alinhadas com o mercado português de 2026: freelance web 30–80 €/h,
+# correções e SEO 40–80 €/h. Ver src/lib/mercado.ts para as fontes.
 TARIFAS = [
-    ("Descoberta / Estratégia", 40),
-    ("UX / Design", 45),
-    ("Frontend", 45),
-    ("Backend / CMS", 50),
-    ("Integrações / API", 55),
-    ("QA / Testes", 35),
-    ("Gestão de projeto", 40),
-    ("Produção de conteúdos", 40),
-    ("SEO", 45),
+    ("Descoberta / Estratégia", 55),
+    ("UX / Design", 55),
+    ("Frontend", 55),
+    ("Backend / CMS", 65),
+    ("Integrações / API", 70),
+    ("QA / Testes", 45),
+    ("Gestão de projeto", 50),
+    ("Produção de conteúdos", 50),
+    ("SEO", 60),
 ]
 
 CONSTANTES = [
@@ -80,13 +82,13 @@ CONSTANTES = [
 
 # Tipo, Descoberta, UX/Design, Frontend, Backend, Integrações, QA, Páginas incl., Preço mín. (€)
 TIPOS = [
-    ("Landing page (1 página)", 2, 6, 14, 0, 2, 3, 1, 450),
-    ("Website institucional (até 5 páginas)", 4, 12, 28, 4, 4, 6, 5, 950),
-    ("Website + Blog / CMS", 6, 16, 40, 16, 6, 10, 8, 1500),
-    ("Loja online (e-commerce)", 10, 24, 70, 40, 20, 18, 10, 2900),
-    ("Web app / Dashboard", 14, 24, 90, 90, 24, 28, 8, 4500),
-    ("Automação / Integrações", 8, 4, 10, 40, 40, 12, 1, 1500),
-    ("Redesign / Recuperação de site", 4, 10, 24, 10, 6, 8, 5, 900),
+    ("Landing page (1 página)", 1, 3, 6, 0, 1, 1, 1, 600),
+    ("Website institucional (até 5 páginas)", 3, 8, 16, 3, 2, 4, 5, 1900),
+    ("Website + Blog / CMS", 4, 10, 22, 8, 3, 6, 8, 3000),
+    ("Loja online (e-commerce)", 6, 14, 36, 22, 10, 10, 10, 2400),
+    ("Web app / Dashboard", 10, 16, 50, 55, 14, 18, 8, 9000),
+    ("Automação / Integrações", 5, 3, 6, 22, 22, 7, 1, 2000),
+    ("Redesign / Recuperação de site", 3, 7, 16, 6, 3, 5, 5, 1500),
 ]
 
 COMPLEXIDADE = [
@@ -126,24 +128,29 @@ SEO = [
 ]
 
 # Plano, % do preço recomendado / mês, mínimo €/mês, inclui
+# Mercado: manutenção técnica 40–150 €/mês, com conteúdos 150–400 €/mês,
+# gestão completa com SEO 400–750 €/mês.
 MANUTENCAO = [
     (
-        "Essencial",
+        "Basic",
         0.020,
-        39,
-        "Alojamento, updates de segurança, backups, 1h/mês de alterações, resposta em 3 dias úteis.",
+        45,
+        95,
+        "Alojamento, atualizações de segurança, SSL, backups testados, monitorização e pequenas correções.",
+    ),
+    (
+        "Business",
+        0.035,
+        130,
+        280,
+        "Basic + 2h/mês de alterações de conteúdo, suporte prioritário em 1 dia útil, relatório trimestral.",
     ),
     (
         "Pro",
-        0.035,
-        89,
-        "Tudo do Essencial + monitorização, 3h/mês de alterações, relatório trimestral, resposta em 1 dia útil.",
-    ),
-    (
-        "Premium",
         0.055,
-        149,
-        "Tudo do Pro + 6h/mês de evolução, prioridade absoluta, SLA 4h úteis, reunião mensal.",
+        320,
+        650,
+        "Business + 5h/mês de evolução, SEO contínuo, relatório mensal, SLA de 4h úteis e reunião mensal.",
     ),
 ]
 
@@ -253,23 +260,26 @@ def build_parametros(ws):
     tabela_fator(56, "PRODUÇÃO DE CONTEÚDOS", CONTEUDOS, fmt="0.0", col_b="Horas")
     tabela_fator(60, "SEO", SEO, fmt="0.0", col_b="Horas")
 
-    secao(ws, 65, "PLANOS DE MANUTENÇÃO MENSAL", ncols=4)
-    for j, titulo in enumerate(["Plano", "% do preço recomendado", "Mínimo / mês", "Inclui"]):
+    secao(ws, 65, "PLANOS DE MANUTENÇÃO MENSAL", ncols=5)
+    for j, titulo in enumerate(
+        ["Plano", "% do preço recomendado", "Mínimo / mês", "Máximo / mês", "Inclui"]
+    ):
         c = ws.cell(row=65, column=1 + j, value=titulo)
         c.font = f_header
         c.fill = fill_header
-    for i, (nome, pct, minimo, inclui) in enumerate(MANUTENCAO):
+    for i, (nome, pct, minimo, maximo, inclui) in enumerate(MANUTENCAO):
         r = 66 + i
         ws.cell(row=r, column=1, value=nome).font = f_bold
         c = ws.cell(row=r, column=2, value=pct)
         c.number_format = "0.0%"
         c.fill = fill_input
         c.border = box
-        c = ws.cell(row=r, column=3, value=minimo)
-        c.number_format = EUR
-        c.fill = fill_input
-        c.border = box
-        ws.cell(row=r, column=4, value=inclui).font = f_label
+        for coluna, valor in ((3, minimo), (4, maximo)):
+            c = ws.cell(row=r, column=coluna, value=valor)
+            c.number_format = EUR
+            c.fill = fill_input
+            c.border = box
+        ws.cell(row=r, column=5, value=inclui).font = f_label
 
     larguras = {"A": 42, "B": 16, "C": 14, "D": 14, "E": 14, "F": 14, "G": 12, "H": 13, "I": 14}
     for col, w in larguras.items():
@@ -535,13 +545,17 @@ def build_calculadora(ws):
     ws.cell(row=29, column=5, value="Comparar com a tarifa alvo. Se descer muito, o desconto é excessivo.").font = f_hint
 
     secao(ws, 31, "4. MANUTENÇÃO MENSAL", ncols=4, col=2)
-    for i, (nome, _, _, inclui) in enumerate(MANUTENCAO):
+    for i, (nome, _, _, _, inclui) in enumerate(MANUTENCAO):
         row = 32 + i
         pr = 66 + i
         c = ws.cell(row=row, column=2, value=f"Plano {nome}")
         c.font = f_bold
         c.border = box
-        c = ws.cell(row=row, column=3, value=f"=MAX({P}$C${pr},ROUND($C$27*{P}$B${pr},0))")
+        c = ws.cell(
+            row=row,
+            column=3,
+            value=f"=MIN({P}$D${pr},MAX({P}$C${pr},ROUND($C$27*{P}$B${pr},0)))",
+        )
         c.number_format = '#,##0 "€ / mês"'
         c.font = f_bold
         c.fill = fill_out
@@ -620,7 +634,7 @@ def build_proposta(ws):
     c.number_format = EUR
     c.border = box
 
-    ws.cell(row=16, column=2, value="Manutenção mensal recomendada (Pro)").font = f_label
+    ws.cell(row=16, column=2, value="Manutenção mensal recomendada (Business)").font = f_label
     c = ws.cell(row=16, column=3, value="=Calculadora!$C$33")
     c.number_format = '#,##0 "€ / mês"'
     c.border = box

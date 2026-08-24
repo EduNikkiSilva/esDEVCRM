@@ -22,9 +22,9 @@ SAIDAS = {
     "Preço Recomendado": "CALCULADORA!C27",
     "Preço Premium": "CALCULADORA!C28",
     "Valor/hora efetivo": "CALCULADORA!C29",
-    "Manutenção Essencial": "CALCULADORA!C32",
-    "Manutenção Pro": "CALCULADORA!C33",
-    "Manutenção Premium": "CALCULADORA!C34",
+    "Manutenção Basic": "CALCULADORA!C32",
+    "Manutenção Business": "CALCULADORA!C33",
+    "Manutenção Pro": "CALCULADORA!C34",
 }
 
 # Cada cenário sobrepõe as células de input da folha Calculadora.

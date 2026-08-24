@@ -15,6 +15,7 @@ import { eur, eur2, pct } from "@/lib/format";
 import {
   EIXOS_COMPLEXIDADE,
   EXTRAS,
+  GRUPOS_EXTRAS,
   INPUTS_INICIAIS,
   PACOTES,
   VALOR_HORA_INTERNO,
@@ -25,7 +26,6 @@ import {
 } from "@/lib/pricing";
 
 const CATEGORIAS: CategoriaPacote[] = ["Website", "E-commerce", "Software / CRM"];
-const GRUPOS = ["Estrutura", "Funcionalidades", "Conteúdo", "SEO"] as const;
 
 export function CalculadoraPrecos({
   leadId,
@@ -104,6 +104,11 @@ export function CalculadoraPrecos({
                         <p className="mt-1.5 text-xs font-medium tabular-nums">
                           {eur(p.minimo)} · {eur(p.recomendado)} · {eur(p.premium)}
                         </p>
+                        <p
+                          className={`mt-0.5 text-[11px] ${ativo ? "text-slate-400" : "text-slate-400"}`}
+                        >
+                          Mercado: {p.mercado}
+                        </p>
                       </button>
                     );
                   })}
@@ -118,7 +123,7 @@ export function CalculadoraPrecos({
             <CardTitle className="text-base">Extras e funcionalidades (§9)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
-            {GRUPOS.map((grupo) => (
+            {GRUPOS_EXTRAS.map((grupo) => (
               <div key={grupo}>
                 <p className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   {grupo}

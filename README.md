@@ -64,6 +64,35 @@ $env:ESDEV_DB="C:\Users\eduar\OneDrive\esdev\esdev.db"; npm start
    checklist de entrega.
 7. Entregue → o contrato de manutenção passa a contar na receita recorrente.
 
+## Preços — calibração V2 (agosto de 2026)
+
+As tabelas não são as do documento V1: foram recalibradas com preços praticados em Portugal
+em 2026, recolhidos de publicações portuguesas de referência. O posicionamento é o do §2 —
+acima do freelancer de entrada, abaixo da agência.
+
+| Serviço | Freelancer (mercado) | Agência (mercado) | esDEV |
+|---|---|---|---|
+| Landing page | 300–1.000 € | 500–2.000 € | 600–1.200 € |
+| Site institucional (5–10 páginas) | 1.000–5.000 € | 2.000–10.000 € | 1.900–3.400 € |
+| Site médio (10–15 páginas) | 3.500–7.000 € | 3.000–6.000 € | 3.000–5.500 € |
+| E-commerce (até 100 produtos) | 2.000–8.000 € | 3.000–15.000 € | 2.400–10.000 € |
+| E-commerce à medida / ERP | — | 10.000–50.000 € | 10.000–22.000 € |
+| Webapp / plataforma à medida | 8.000–30.000 € | 15.000–80.000 € | 9.000–25.000 € |
+| CRM PME pequena | — | 3.000–8.000 € | 4.500–8.000 € |
+| CRM PME média | — | 8.000–25.000 € | 9.000–18.000 € |
+| Manutenção técnica | — | 40–150 €/mês | 45–95 €/mês (Basic) |
+| Manutenção com conteúdos | — | 150–400 €/mês | 130–280 €/mês (Business) |
+| Gestão completa com SEO | — | 400–750 €/mês | 320–650 €/mês (Pro) |
+| Trabalho avulso | 20–60 €/h · 40–80 €/h | — | 50–75 €/h |
+
+O valor/hora interno mínimo passou de 35 € para **45 €/h**: é o piso abaixo do qual um projeto
+não paga custos, impostos e tempo não faturável, num mercado onde programadores freelance
+cobram 30–80 €/h.
+
+As faixas de mercado e as fontes (com links) estão na página **Referências** da aplicação e em
+`src/lib/mercado.ts`. Revê-las anualmente, ou assim que houver 10 projetos fechados com horas
+reais medidas — a partir daí os dados próprios valem mais do que qualquer artigo.
+
 ## Como o preço é calculado
 
 ```
@@ -78,16 +107,18 @@ preço final = preço técnico ± ajuste comercial, arredondado a 10 €
 ```
 
 Os três escalões (mínimo, recomendado, premium) percorrem a mesma fórmula partindo das três
-colunas da tabela do §8, e mapeiam diretamente nos níveis Essential, Business e Premium das
-propostas (§10). A mensalidade sugerida escolhe o plano do §19 pelo peso do projeto e pela
+colunas da tabela de pacotes, e mapeiam diretamente nos níveis Essential, Business e Premium
+das propostas (§10). A mensalidade sugerida escolhe o plano do §19 pelo peso do projeto e pela
 categoria, posicionando o valor dentro da faixa do plano.
 
-O valor/hora efetivo é mostrado sempre, comparado com a referência interna de 35 €/h (§7).
-Fica vermelho quando o preço não paga as horas — é o sinal do §29 de que o orçamento precisa
-de correção, não de desconto.
+O valor/hora efetivo é mostrado sempre, comparado com o mínimo interno de 45 €/h. Fica
+vermelho quando o preço não paga as horas — é o sinal do §29 de que o orçamento precisa de
+correção, não de desconto.
 
 Onde afinar: `src/lib/pricing.ts` tem as tabelas de pacotes, extras, planos de manutenção e
-todos os fatores no topo do ficheiro. É o único sítio a mexer para recalibrar preços.
+todos os fatores no topo do ficheiro. É o único sítio a mexer para recalibrar preços. Cada
+pacote traz um campo `mercado` com a faixa observada, que aparece na calculadora — serve para
+justificar o valor numa negociação.
 
 ## Calculadora em Excel
 
@@ -99,8 +130,10 @@ python scripts/gerar_calculadora.py Calculadora_Precos_esDEV.xlsx
 python scripts/verificar_calculadora.py   # avalia as fórmulas em 4 cenários
 ```
 
-O modelo dela é independente (baseado em horas por fase e tarifas). O CRM é a fonte de
-verdade; o Excel é o instrumento de apoio.
+O modelo dela é independente — parte de horas por fase e tarifas horárias (55–70 €/h,
+alinhadas com o mercado), enquanto o CRM parte de pacotes fechados. Os dois convergem nos
+mesmos valores para os casos típicos (um institucional de 5 páginas dá 2.950 € no Excel e
+2.600 € no CRM), mas o CRM é a fonte de verdade; o Excel é o instrumento de apoio.
 
 ## Estrutura
 
@@ -120,7 +153,9 @@ better-sqlite3.
 
 ## Avisos
 
-Os preços são referências internas V1 e devem ser revistos com custos e dados reais. O
+Os preços são referências internas calibradas com o mercado, não uma tabela pública, e devem
+ser confirmados com os teus custos reais e com o teu enquadramento fiscal (a Segurança Social
+representa cerca de 15% da faturação bruta a partir do segundo ano de atividade). O
 modelo de contrato e as cláusulas listadas em Referências precisam de revisão jurídica antes
 de uso definitivo, e o enquadramento fiscal deve ser validado com contabilista — tal como o
 próprio documento indica.

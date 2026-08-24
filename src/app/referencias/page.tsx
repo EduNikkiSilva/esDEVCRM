@@ -16,7 +16,14 @@ import {
   REGRAS_DE_OURO,
 } from "@/lib/dominio";
 import { eur } from "@/lib/format";
-import { EXTRAS, PACOTES, PLANOS_MANUTENCAO, VALOR_HORA_INTERNO } from "@/lib/pricing";
+import { FAIXAS_MERCADO, FONTES_MERCADO, MERCADO_ATUALIZADO_EM } from "@/lib/mercado";
+import {
+  EXTRAS,
+  PACOTES,
+  PLANOS_MANUTENCAO,
+  TARIFA_HORA_ADICIONAL,
+  VALOR_HORA_INTERNO,
+} from "@/lib/pricing";
 
 const PROCESSO = [
   "Lead",
@@ -67,7 +74,65 @@ export default function ReferenciasPage() {
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Preços de referência V1 (§8)</CardTitle>
+            <CardTitle className="text-base">
+              Mercado português vs. esDEV — {MERCADO_ATUALIZADO_EM}
+            </CardTitle>
+            <p className="text-sm text-slate-500">
+              Faixas recolhidas em publicações portuguesas de preços. O posicionamento da esDEV é o
+              do §2: acima do freelancer de entrada, abaixo da agência.
+            </p>
+          </CardHeader>
+          <CardContent className="px-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Serviço</TableHead>
+                  <TableHead>Freelancer</TableHead>
+                  <TableHead>Agência</TableHead>
+                  <TableHead>esDEV</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {FAIXAS_MERCADO.map((f) => (
+                  <TableRow key={f.servico}>
+                    <TableCell className="font-medium">{f.servico}</TableCell>
+                    <TableCell className="text-slate-500">{f.freelancer ?? "—"}</TableCell>
+                    <TableCell className="text-slate-500">{f.agencia ?? "—"}</TableCell>
+                    <TableCell className="font-semibold">{f.esdev}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="px-6 pt-4">
+              <p className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                Fontes
+              </p>
+              <ul className="space-y-1.5 text-xs text-slate-600">
+                {FONTES_MERCADO.map((f) => (
+                  <li key={f.url}>
+                    <a
+                      href={f.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-medium underline decoration-slate-300 underline-offset-2 hover:decoration-slate-900"
+                    >
+                      {f.titulo}
+                    </a>
+                    <span className="text-slate-500"> — {f.nota}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-slate-500">
+                Rever anualmente, ou assim que houver 10 projetos fechados com horas reais medidas:
+                dados próprios valem mais do que qualquer artigo.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Tabela de preços esDEV V2</CardTitle>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
@@ -84,7 +149,10 @@ export default function ReferenciasPage() {
                 {PACOTES.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{p.nome}</TableCell>
-                    <TableCell className="text-slate-500">{p.categoria}</TableCell>
+                    <TableCell className="text-slate-500">
+                      {p.categoria}
+                      <span className="block text-xs text-slate-400">{p.mercado}</span>
+                    </TableCell>
                     <TableCell className="text-right tabular-nums">{eur(p.minimo)}</TableCell>
                     <TableCell className="text-right font-semibold tabular-nums">
                       {eur(p.recomendado)}
@@ -95,9 +163,10 @@ export default function ReferenciasPage() {
               </TableBody>
             </Table>
             <p className="px-6 pt-4 text-xs text-slate-500">
-              O Website Business é o produto principal para PMEs. Valor/hora interno de referência:{" "}
+              O Website Business é o produto principal para PMEs. Valor/hora interno mínimo:{" "}
               {eur(VALOR_HORA_INTERNO)}/h — serve para validar rentabilidade, não para apresentar ao
-              cliente.
+              cliente. Trabalho avulso fora do âmbito: {eur(TARIFA_HORA_ADICIONAL.minimo)}–
+              {eur(TARIFA_HORA_ADICIONAL.maximo)}/h.
             </p>
           </CardContent>
         </Card>
@@ -135,6 +204,13 @@ export default function ReferenciasPage() {
                   <TableCell className="text-slate-500">Fator</TableCell>
                   <TableCell className="text-right">+20% a +30%</TableCell>
                 </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Trabalho avulso à hora</TableCell>
+                  <TableCell className="text-slate-500">Fora do âmbito</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {eur(TARIFA_HORA_ADICIONAL.minimo)}–{eur(TARIFA_HORA_ADICIONAL.maximo)}/h
+                  </TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </CardContent>
@@ -155,10 +231,12 @@ export default function ReferenciasPage() {
                     </span>
                   </p>
                   <p className="text-sm text-slate-600">{p.inclui}</p>
+                  <p className="text-xs text-slate-400">Mercado: {p.mercado}</p>
                 </div>
               ))}
               <p className="text-xs text-slate-500">
-                Desenvolvimento adicional: 35–50 €/h.
+                Desenvolvimento adicional: {eur(TARIFA_HORA_ADICIONAL.minimo)}–
+                {eur(TARIFA_HORA_ADICIONAL.maximo)}/h.
               </p>
             </CardContent>
           </Card>
