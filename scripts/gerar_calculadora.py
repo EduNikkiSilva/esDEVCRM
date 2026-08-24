@@ -53,18 +53,18 @@ thin = Side(style="thin", color="BFBFBF")
 box = Border(left=thin, right=thin, top=thin, bottom=thin)
 
 # --- Dados do modelo ---------------------------------------------------------
-# Tarifas alinhadas com o mercado português de 2026: freelance web 30–80 €/h,
-# correções e SEO 40–80 €/h. Ver src/lib/mercado.ts para as fontes.
+# Tarifas de freelancer profissional em Portugal, 2026: web 20–60 €/h,
+# programação 30–80 €/h. Ver src/lib/mercado.ts para as fontes.
 TARIFAS = [
-    ("Descoberta / Estratégia", 55),
-    ("UX / Design", 55),
-    ("Frontend", 55),
-    ("Backend / CMS", 65),
-    ("Integrações / API", 70),
-    ("QA / Testes", 45),
-    ("Gestão de projeto", 50),
-    ("Produção de conteúdos", 50),
-    ("SEO", 60),
+    ("Descoberta / Estratégia", 45),
+    ("UX / Design", 48),
+    ("Frontend", 48),
+    ("Backend / CMS", 55),
+    ("Integrações / API", 58),
+    ("QA / Testes", 40),
+    ("Gestão de projeto", 45),
+    ("Produção de conteúdos", 45),
+    ("SEO", 50),
 ]
 
 CONSTANTES = [
@@ -82,13 +82,13 @@ CONSTANTES = [
 
 # Tipo, Descoberta, UX/Design, Frontend, Backend, Integrações, QA, Páginas incl., Preço mín. (€)
 TIPOS = [
-    ("Landing page (1 página)", 1, 3, 6, 0, 1, 1, 1, 600),
-    ("Website institucional (até 5 páginas)", 3, 8, 16, 3, 2, 4, 5, 1900),
-    ("Website + Blog / CMS", 4, 10, 22, 8, 3, 6, 8, 3000),
-    ("Loja online (e-commerce)", 6, 14, 36, 22, 10, 10, 10, 2400),
-    ("Web app / Dashboard", 10, 16, 50, 55, 14, 18, 8, 9000),
-    ("Automação / Integrações", 5, 3, 6, 22, 22, 7, 1, 2000),
-    ("Redesign / Recuperação de site", 3, 7, 16, 6, 3, 5, 5, 1500),
+    ("Landing page (1 página)", 1, 3, 6, 0, 1, 1, 1, 450),
+    ("Website institucional (até 5 páginas)", 3, 8, 16, 3, 2, 4, 5, 1400),
+    ("Website + Blog / CMS", 4, 10, 22, 8, 3, 6, 8, 2200),
+    ("Loja online (e-commerce)", 6, 14, 36, 22, 10, 10, 10, 1800),
+    ("Web app / Dashboard", 10, 16, 50, 55, 14, 18, 8, 6500),
+    ("Automação / Integrações", 5, 3, 6, 22, 22, 7, 1, 1500),
+    ("Redesign / Recuperação de site", 3, 7, 16, 6, 3, 5, 5, 1200),
 ]
 
 COMPLEXIDADE = [
@@ -134,23 +134,23 @@ MANUTENCAO = [
     (
         "Basic",
         0.020,
-        45,
-        95,
+        39,
+        79,
         "Alojamento, atualizações de segurança, SSL, backups testados, monitorização e pequenas correções.",
     ),
     (
         "Business",
         0.035,
-        130,
-        280,
-        "Basic + 2h/mês de alterações de conteúdo, suporte prioritário em 1 dia útil, relatório trimestral.",
+        99,
+        199,
+        "Basic + 1,5h/mês de alterações de conteúdo, suporte prioritário em 1 dia útil, relatório trimestral.",
     ),
     (
         "Pro",
         0.055,
-        320,
-        650,
-        "Business + 5h/mês de evolução, SEO contínuo, relatório mensal, SLA de 4h úteis e reunião mensal.",
+        249,
+        450,
+        "Business + 4h/mês de evolução, SEO contínuo, relatório mensal, SLA de 4h úteis e reunião mensal.",
     ),
 ]
 

@@ -16,12 +16,18 @@ import {
   REGRAS_DE_OURO,
 } from "@/lib/dominio";
 import { eur } from "@/lib/format";
-import { FAIXAS_MERCADO, FONTES_MERCADO, MERCADO_ATUALIZADO_EM } from "@/lib/mercado";
+import {
+  FAIXAS_MERCADO,
+  FONTES_MERCADO,
+  MERCADO_ATUALIZADO_EM,
+  POSICIONAMENTO,
+} from "@/lib/mercado";
 import {
   EXTRAS,
   PACOTES,
   PLANOS_MANUTENCAO,
   TARIFA_HORA_ADICIONAL,
+  VALOR_HORA_ALVO,
   VALOR_HORA_INTERNO,
 } from "@/lib/pricing";
 
@@ -78,8 +84,7 @@ export default function ReferenciasPage() {
               Mercado português vs. esDEV — {MERCADO_ATUALIZADO_EM}
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Faixas recolhidas em publicações portuguesas de preços. O posicionamento da esDEV é o
-              do §2: acima do freelancer de entrada, abaixo da agência.
+              Faixas recolhidas em publicações portuguesas de preços. {POSICIONAMENTO}
             </p>
           </CardHeader>
           <CardContent className="px-0">
@@ -132,7 +137,7 @@ export default function ReferenciasPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Tabela de preços esDEV V2</CardTitle>
+            <CardTitle className="text-base">Tabela de preços esDEV</CardTitle>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
@@ -163,10 +168,10 @@ export default function ReferenciasPage() {
               </TableBody>
             </Table>
             <p className="px-6 pt-4 text-xs text-muted-foreground">
-              O Website Business é o produto principal para PMEs. Valor/hora interno mínimo:{" "}
-              {eur(VALOR_HORA_INTERNO)}/h — serve para validar rentabilidade, não para apresentar ao
-              cliente. Trabalho avulso fora do âmbito: {eur(TARIFA_HORA_ADICIONAL.minimo)}–
-              {eur(TARIFA_HORA_ADICIONAL.maximo)}/h.
+              O Website Business é o produto principal para PMEs. Valor/hora: piso de{" "}
+              {eur(VALOR_HORA_INTERNO)}/h e alvo de {eur(VALOR_HORA_ALVO)}/h — servem para validar
+              rentabilidade, não para apresentar ao cliente. Trabalho avulso fora do âmbito:{" "}
+              {eur(TARIFA_HORA_ADICIONAL.minimo)}–{eur(TARIFA_HORA_ADICIONAL.maximo)}/h.
             </p>
           </CardContent>
         </Card>
