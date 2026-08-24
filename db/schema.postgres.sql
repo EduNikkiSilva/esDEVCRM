@@ -123,3 +123,12 @@ CREATE TABLE IF NOT EXISTS ficheiros (
   dados BYTEA NOT NULL,
   atualizado_em TEXT NOT NULL DEFAULT (now()::text)
 );
+
+CREATE TABLE IF NOT EXISTS acessos (
+  id SERIAL PRIMARY KEY,
+  email TEXT,
+  resultado TEXT NOT NULL,
+  ip TEXT,
+  agente TEXT,
+  quando TEXT NOT NULL DEFAULT (now()::text)
+);

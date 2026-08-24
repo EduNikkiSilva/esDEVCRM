@@ -123,3 +123,12 @@ CREATE TABLE IF NOT EXISTS ficheiros (
   dados BLOB NOT NULL,
   atualizado_em TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS acessos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT,
+  resultado TEXT NOT NULL,
+  ip TEXT,
+  agente TEXT,
+  quando TEXT NOT NULL DEFAULT (datetime('now'))
+);

@@ -41,6 +41,7 @@ async function cookieSessao(sessao, segredo = SEGREDO) {
 }
 
 const daqui30Dias = () => Date.now() + 30 * 24 * 60 * 60 * 1000;
+const agora = () => Date.now();
 
 // --- Servidor --------------------------------------------------------------
 const servidor = spawn("npx", ["next", "start", "-p", String(PORTA)], {
@@ -103,6 +104,7 @@ const valida = await cookieSessao({
   email: "geral@esdev.pt",
   nome: "esDEV",
   exp: daqui30Dias(),
+  ult: agora(),
 });
 const comSessao = await pedir("/", valida);
 registar("Sessão válida dá acesso", comSessao.status === 200, String(comSessao.status));
@@ -112,7 +114,7 @@ registar("Sessão válida vê o pipeline", leadsComSessao.status === 200, String
 
 // --- Cookies inválidos -----------------------------------------------------
 const outroSegredo = await cookieSessao(
-  { email: "geral@esdev.pt", nome: "esDEV", exp: daqui30Dias() },
+  { email: "geral@esdev.pt", nome: "esDEV", exp: daqui30Dias(), ult: agora() },
   "outro-segredo-qualquer",
 );
 const forjado = await pedir("/", outroSegredo);
@@ -126,6 +128,7 @@ const expirado = await cookieSessao({
   email: "geral@esdev.pt",
   nome: "esDEV",
   exp: Date.now() - 1000,
+  ult: agora(),
 });
 const rExpirado = await pedir("/", expirado);
 registar(
@@ -140,6 +143,42 @@ registar(
   "Assinatura inválida é recusada",
   rAdulterado.status >= 300 && (rAdulterado.headers.get("location") ?? "").includes("/login"),
   String(rAdulterado.status),
+);
+
+// --- Inatividade -----------------------------------------------------------
+const inativa = await cookieSessao({
+  email: "geral@esdev.pt",
+  nome: "esDEV",
+  exp: daqui30Dias(),
+  ult: Date.now() - 31 * 60 * 1000, // 31 minutos sem atividade
+});
+const rInativa = await pedir("/", inativa);
+registar(
+  "Sessão inativa há mais de 30 minutos é recusada",
+  rInativa.status >= 300 && (rInativa.headers.get("location") ?? "").includes("expirou=1"),
+  rInativa.headers.get("location") ?? String(rInativa.status),
+);
+
+const semUlt = await cookieSessao({ email: "geral@esdev.pt", nome: "esDEV", exp: daqui30Dias() });
+const rSemUlt = await pedir("/", semUlt);
+registar(
+  "Cookie antigo, sem marca de atividade, é recusado",
+  rSemUlt.status >= 300 && (rSemUlt.headers.get("location") ?? "").includes("/login"),
+  String(rSemUlt.status),
+);
+
+const antiga = await cookieSessao({
+  email: "geral@esdev.pt",
+  nome: "esDEV",
+  exp: daqui30Dias(),
+  ult: Date.now() - 10 * 60 * 1000, // 10 minutos: válida, mas deve ser renovada
+});
+const rRenova = await pedir("/", antiga);
+const cookieNovo = rRenova.headers.get("set-cookie") ?? "";
+registar(
+  "Utilização renova a sessão (deslizante)",
+  rRenova.status === 200 && cookieNovo.includes("esdev_sessao="),
+  rRenova.status === 200 ? "cookie reemitido" : String(rRenova.status),
 );
 
 // O middleware valida a assinatura, não a lista de emails: essa é aplicada no

@@ -1,5 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { COOKIE_SESSAO, lerSessao } from "@/lib/sessao";
+import {
+  COOKIE_SESSAO,
+  DIAS_SESSAO,
+  assinarSessao,
+  estadoSessao,
+} from "@/lib/sessao";
 
 /**
  * Trava a aplicação toda. Sem sessão válida, o visitante só vê o ecrã de login —
@@ -24,11 +29,27 @@ export async function proxy(pedido: NextRequest) {
     return NextResponse.next();
   }
 
-  const sessao = await lerSessao(pedido.cookies.get(COOKIE_SESSAO)?.value, segredo!);
-  if (sessao) return NextResponse.next();
+  const estado = await estadoSessao(pedido.cookies.get(COOKIE_SESSAO)?.value, segredo!);
+  if (estado) {
+    if (!estado.renovar) return NextResponse.next();
+
+    // Renovação deslizante: cada utilização adia o fim por inatividade, sem
+    // nunca passar do limite absoluto da sessão.
+    const resposta = NextResponse.next();
+    const cookie = await assinarSessao({ ...estado.sessao, ult: Date.now() }, segredo!);
+    resposta.cookies.set(COOKIE_SESSAO, cookie, {
+      httpOnly: true,
+      secure: pedido.nextUrl.protocol === "https:",
+      sameSite: "lax",
+      maxAge: DIAS_SESSAO * 24 * 60 * 60,
+      path: "/",
+    });
+    return resposta;
+  }
 
   const login = new URL("/login", pedido.nextUrl);
   login.searchParams.set("para", `${pathname}${search}`);
+  if (pedido.cookies.has(COOKIE_SESSAO)) login.searchParams.set("expirou", "1");
   const resposta = NextResponse.redirect(login);
   resposta.cookies.delete(COOKIE_SESSAO);
   return resposta;

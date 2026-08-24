@@ -110,6 +110,26 @@ EMAILS_PERMITIDOS=geral@esdev.pt
 Enquanto estas variáveis não existirem, a aplicação fica aberta — é o modo local — e a barra
 lateral mostra um aviso a dizer que não deve ser publicada assim.
 
+### O que está ativo
+
+| Medida | Detalhe |
+|---|---|
+| Entrada | Conta Google, restrita a `EMAILS_PERMITIDOS` |
+| Inatividade | Sessão fecha após 30 minutos sem uso (`MINUTOS_INATIVIDADE`) |
+| Duração máxima | 30 dias, mesmo com uso contínuo |
+| Renovação | Deslizante: cada utilização adia o fim por inatividade |
+| Cookie | Assinado com HMAC-SHA256, `httpOnly`, `secure`, `sameSite=lax` |
+| HTTPS | Obrigatório, com HSTS de dois anos |
+| Motores de busca | `robots.txt` e `X-Robots-Tag: noindex` |
+| Incorporação | Bloqueada (`X-Frame-Options` e `frame-ancestors 'none'`) |
+| Formulários | `form-action` limitado ao próprio site e ao Google |
+| Permissões do browser | Câmara, microfone e localização negados |
+| Registo de acessos | Entradas, saídas e tentativas recusadas, com IP, visíveis em Definições |
+
+O registo de acessos responde a uma pergunta que de outra forma não tem resposta: alguém
+tentou entrar na área reservada? Uma tentativa recusada aparece a vermelho, com o email que a
+fez e o endereço de onde veio.
+
 Para verificar a proteção: `npm run teste-autenticacao`. Arranca o servidor com credenciais de
 teste e confirma que todas as páginas ficam fechadas sem sessão, que um cookie assinado com
 outro segredo é recusado, que um cookie expirado é recusado e que a assinatura é verificada.
