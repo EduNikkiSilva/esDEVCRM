@@ -18,8 +18,8 @@ import { listarProjetos } from "@/lib/queries";
 // Lê a base de dados local a cada pedido.
 export const dynamic = "force-dynamic";
 
-export default function ProjetosPage() {
-  const projetos = listarProjetos();
+export default async function ProjetosPage() {
+  const projetos = await listarProjetos();
 
   return (
     <>

@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { executa, primeiro } from "@/lib/db";
+import { AGORA, HOJE, executa, primeiro } from "@/lib/db";
 import { PLANOS_PAGAMENTO } from "@/lib/dominio";
 import { pastaDados } from "@/lib/logo";
 import { calcularPreco, type InputsCalculadora } from "@/lib/pricing";
@@ -27,7 +27,7 @@ function refrescar(...caminhos: string[]) {
 // --- Leads -------------------------------------------------------------------
 
 export async function criarLead(fd: FormData) {
-  const res = executa(
+  const res = await executa(
     `INSERT INTO leads (empresa, contacto_nome, email, telefone, origem, fase, tipo_solucao,
                         orcamento_indicado, valor_estimado, notas)
      VALUES (?,?,?,?,?,?,?,?,?,?)`,
@@ -48,10 +48,10 @@ export async function criarLead(fd: FormData) {
 
 export async function atualizarLead(fd: FormData) {
   const id = numero(fd, "id");
-  executa(
+  await executa(
     `UPDATE leads SET empresa=?, contacto_nome=?, email=?, telefone=?, origem=?, fase=?,
        tipo_solucao=?, orcamento_indicado=?, valor_estimado=?, notas=?,
-       atualizado_em=datetime('now') WHERE id=?`,
+       atualizado_em=${AGORA} WHERE id=?`,
     texto(fd, "empresa") ?? "Sem nome",
     texto(fd, "contacto_nome"),
     texto(fd, "email"),
@@ -68,12 +68,12 @@ export async function atualizarLead(fd: FormData) {
 }
 
 export async function mudarFaseLead(id: number, fase: string) {
-  executa("UPDATE leads SET fase=?, atualizado_em=datetime('now') WHERE id=?", fase, id);
+  await executa(`UPDATE leads SET fase=?, atualizado_em=${AGORA} WHERE id=?`, fase, id);
   refrescar("/", "/leads", `/leads/${id}`);
 }
 
 export async function apagarLead(fd: FormData) {
-  executa("DELETE FROM leads WHERE id=?", numero(fd, "id"));
+  await executa("DELETE FROM leads WHERE id=?", numero(fd, "id"));
   refrescar("/", "/leads");
   redirect("/leads");
 }
@@ -81,9 +81,9 @@ export async function apagarLead(fd: FormData) {
 // --- Briefing ----------------------------------------------------------------
 
 export async function guardarBriefing(leadId: number, dados: Record<string, unknown>) {
-  executa(
-    `INSERT INTO briefings (lead_id, dados, atualizado_em) VALUES (?,?,datetime('now'))
-     ON CONFLICT(lead_id) DO UPDATE SET dados=excluded.dados, atualizado_em=datetime('now')`,
+  await executa(
+    `INSERT INTO briefings (lead_id, dados, atualizado_em) VALUES (?,?,${AGORA})
+     ON CONFLICT(lead_id) DO UPDATE SET dados=excluded.dados, atualizado_em=${AGORA}`,
     leadId,
     JSON.stringify(dados),
   );
@@ -97,7 +97,7 @@ export async function guardarAnalise(
   opcoes: { leadId?: number | null; titulo?: string } = {},
 ) {
   const r = calcularPreco(inputs);
-  const res = executa(
+  const res = await executa(
     `INSERT INTO analises (lead_id, titulo, inputs, preco_minimo, preco_recomendado, preco_premium,
                            mensalidade, plano_manutencao, horas_estimadas, valor_hora)
      VALUES (?,?,?,?,?,?,?,?,?,?)`,
@@ -114,8 +114,8 @@ export async function guardarAnalise(
   );
 
   if (opcoes.leadId) {
-    executa(
-      "UPDATE leads SET valor_estimado=?, atualizado_em=datetime('now') WHERE id=?",
+    await executa(
+      `UPDATE leads SET valor_estimado=?, atualizado_em=${AGORA} WHERE id=?`,
       r.precoFinal.recomendado,
       opcoes.leadId,
     );
@@ -129,7 +129,7 @@ export async function guardarAnalise(
 
 export async function criarProposta(fd: FormData) {
   const leadId = numero(fd, "lead_id");
-  executa(
+  await executa(
     `INSERT INTO propostas (lead_id, analise_id, nivel, valor, mensalidade, validade_dias,
                             estado, ambito, exclusoes, rondas_alteracoes)
      VALUES (?,?,?,?,?,?,?,?,?,?)`,
@@ -150,8 +150,8 @@ export async function criarProposta(fd: FormData) {
 export async function mudarEstadoProposta(fd: FormData) {
   const id = numero(fd, "id");
   const estado = texto(fd, "estado") ?? "Rascunho";
-  executa("UPDATE propostas SET estado=? WHERE id=?", estado, id);
-  const p = primeiro<{ lead_id: number; valor: number }>(
+  await executa("UPDATE propostas SET estado=? WHERE id=?", estado, id);
+  const p = await primeiro<{ lead_id: number; valor: number }>(
     "SELECT lead_id, valor FROM propostas WHERE id=?",
     id,
   );
@@ -159,8 +159,8 @@ export async function mudarEstadoProposta(fd: FormData) {
     const fase =
       estado === "Enviada" ? "Proposta enviada" : estado === "Aceite" ? "Aceite" : null;
     if (fase) {
-      executa(
-        "UPDATE leads SET fase=?, valor_estimado=?, atualizado_em=datetime('now') WHERE id=?",
+      await executa(
+        `UPDATE leads SET fase=?, valor_estimado=?, atualizado_em=${AGORA} WHERE id=?`,
         fase,
         p.valor,
         p.lead_id,
@@ -175,7 +175,7 @@ export async function mudarEstadoProposta(fd: FormData) {
 /** Cria cliente (se necessário), projeto, plano de faturação e manutenção. */
 export async function converterEmProjeto(fd: FormData) {
   const leadId = numero(fd, "lead_id");
-  const lead = primeiro<{
+  const lead = await primeiro<{
     empresa: string;
     contacto_nome: string | null;
     email: string | null;
@@ -187,7 +187,7 @@ export async function converterEmProjeto(fd: FormData) {
 
   let clienteId = lead.cliente_id;
   if (!clienteId) {
-    const res = executa(
+    const res = await executa(
       "INSERT INTO clientes (empresa, contacto_nome, email, telefone) VALUES (?,?,?,?)",
       lead.empresa,
       lead.contacto_nome,
@@ -195,11 +195,11 @@ export async function converterEmProjeto(fd: FormData) {
       lead.telefone,
     );
     clienteId = Number(res.lastInsertRowid);
-    executa("UPDATE leads SET cliente_id=? WHERE id=?", clienteId, leadId);
+    await executa("UPDATE leads SET cliente_id=? WHERE id=?", clienteId, leadId);
   }
 
   const preco = numero(fd, "preco") || lead.valor_estimado;
-  const projeto = executa(
+  const projeto = await executa(
     `INSERT INTO projetos (cliente_id, lead_id, nome, pacote, estado, preco, custos_externos,
                            horas_estimadas, inicio, entrega_prevista, checklist, notas)
      VALUES (?,?,?,?,?,?,?,?,?,?,'[]',?)`,
@@ -219,7 +219,7 @@ export async function converterEmProjeto(fd: FormData) {
 
   const plano = PLANOS_PAGAMENTO.find((p) => p.id === texto(fd, "plano_pagamento")) ?? PLANOS_PAGAMENTO[0];
   for (const marco of plano.marcos) {
-    executa(
+    await executa(
       "INSERT INTO faturas (projeto_id, cliente_id, descricao, tipo, valor, estado) VALUES (?,?,?,?,?,'Pendente')",
       projetoId,
       clienteId,
@@ -231,7 +231,7 @@ export async function converterEmProjeto(fd: FormData) {
 
   const mensalidade = numero(fd, "mensalidade");
   if (mensalidade > 0) {
-    executa(
+    await executa(
       "INSERT INTO manutencoes (cliente_id, projeto_id, plano, valor_mensal, estado, inicio) VALUES (?,?,?,?,'Ativo',?)",
       clienteId,
       projetoId,
@@ -241,7 +241,7 @@ export async function converterEmProjeto(fd: FormData) {
     );
   }
 
-  executa("UPDATE leads SET fase='Projeto ativo', atualizado_em=datetime('now') WHERE id=?", leadId);
+  await executa(`UPDATE leads SET fase='Projeto ativo', atualizado_em=${AGORA} WHERE id=?`, leadId);
   refrescar("/", "/leads", `/leads/${leadId}`, "/projetos", "/clientes", "/faturas", "/manutencao");
   redirect(`/projetos/${projetoId}`);
 }
@@ -261,14 +261,14 @@ export async function guardarCliente(fd: FormData) {
     texto(fd, "notas"),
   ];
   if (id) {
-    executa(
+    await executa(
       `UPDATE clientes SET empresa=?, nif=?, contacto_nome=?, contacto_cargo=?, email=?,
         telefone=?, website=?, notas=? WHERE id=?`,
       ...campos,
       id,
     );
   } else {
-    executa(
+    await executa(
       `INSERT INTO clientes (empresa, nif, contacto_nome, contacto_cargo, email, telefone, website, notas)
        VALUES (?,?,?,?,?,?,?,?)`,
       ...campos,
@@ -278,7 +278,7 @@ export async function guardarCliente(fd: FormData) {
 }
 
 export async function apagarCliente(fd: FormData) {
-  executa("DELETE FROM clientes WHERE id=?", numero(fd, "id"));
+  await executa("DELETE FROM clientes WHERE id=?", numero(fd, "id"));
   refrescar("/clientes");
 }
 
@@ -286,7 +286,7 @@ export async function apagarCliente(fd: FormData) {
 
 export async function atualizarProjeto(fd: FormData) {
   const id = numero(fd, "id");
-  executa(
+  await executa(
     `UPDATE projetos SET nome=?, pacote=?, estado=?, preco=?, custos_externos=?, horas_estimadas=?,
        horas_reais=?, inicio=?, entrega_prevista=?, notas=? WHERE id=?`,
     texto(fd, "nome") ?? "Projeto",
@@ -305,13 +305,13 @@ export async function atualizarProjeto(fd: FormData) {
 }
 
 export async function guardarChecklist(projetoId: number, itens: string[]) {
-  executa("UPDATE projetos SET checklist=? WHERE id=?", JSON.stringify(itens), projetoId);
+  await executa("UPDATE projetos SET checklist=? WHERE id=?", JSON.stringify(itens), projetoId);
   refrescar(`/projetos/${projetoId}`);
 }
 
 export async function registarHoras(fd: FormData) {
   const id = numero(fd, "id");
-  executa("UPDATE projetos SET horas_reais = horas_reais + ? WHERE id=?", numero(fd, "horas"), id);
+  await executa("UPDATE projetos SET horas_reais = horas_reais + ? WHERE id=?", numero(fd, "horas"), id);
   refrescar("/", "/projetos", `/projetos/${id}`);
 }
 
@@ -319,7 +319,7 @@ export async function registarHoras(fd: FormData) {
 
 export async function criarTarefa(fd: FormData) {
   const projetoId = numero(fd, "projeto_id");
-  executa(
+  await executa(
     "INSERT INTO tarefas (projeto_id, titulo, prazo) VALUES (?,?,?)",
     projetoId,
     texto(fd, "titulo") ?? "Tarefa",
@@ -331,7 +331,7 @@ export async function criarTarefa(fd: FormData) {
 export async function alternarTarefa(fd: FormData) {
   const id = numero(fd, "id");
   const projetoId = numero(fd, "projeto_id");
-  executa(
+  await executa(
     "UPDATE tarefas SET estado = CASE estado WHEN 'Aberta' THEN 'Concluída' ELSE 'Aberta' END WHERE id=?",
     id,
   );
@@ -345,10 +345,12 @@ export async function criarFatura(fd: FormData) {
   const clienteId =
     numero(fd, "cliente_id") ||
     (projetoId
-      ? (primeiro<{ cliente_id: number | null }>("SELECT cliente_id FROM projetos WHERE id=?", projetoId)
-          ?.cliente_id ?? null)
+      ? ((await primeiro<{ cliente_id: number | null }>(
+          "SELECT cliente_id FROM projetos WHERE id=?",
+          projetoId,
+        ))?.cliente_id ?? null)
       : null);
-  executa(
+  await executa(
     "INSERT INTO faturas (projeto_id, cliente_id, descricao, tipo, valor, estado, emitida_em) VALUES (?,?,?,?,?,?,?)",
     projetoId,
     clienteId,
@@ -363,23 +365,23 @@ export async function criarFatura(fd: FormData) {
 
 export async function alternarPagamento(fd: FormData) {
   const id = numero(fd, "id");
-  const f = primeiro<{ estado: string; projeto_id: number | null }>(
+  const f = await primeiro<{ estado: string; projeto_id: number | null }>(
     "SELECT estado, projeto_id FROM faturas WHERE id=?",
     id,
   );
   if (!f) return;
   if (f.estado === "Paga") {
-    executa("UPDATE faturas SET estado='Pendente', paga_em=NULL WHERE id=?", id);
+    await executa("UPDATE faturas SET estado='Pendente', paga_em=NULL WHERE id=?", id);
   } else {
-    executa("UPDATE faturas SET estado='Paga', paga_em=date('now') WHERE id=?", id);
+    await executa(`UPDATE faturas SET estado='Paga', paga_em=${HOJE} WHERE id=?`, id);
   }
   refrescar("/", "/faturas", f.projeto_id ? `/projetos/${f.projeto_id}` : "/faturas");
 }
 
 export async function apagarFatura(fd: FormData) {
   const id = numero(fd, "id");
-  const f = primeiro<{ projeto_id: number | null }>("SELECT projeto_id FROM faturas WHERE id=?", id);
-  executa("DELETE FROM faturas WHERE id=?", id);
+  const f = await primeiro<{ projeto_id: number | null }>("SELECT projeto_id FROM faturas WHERE id=?", id);
+  await executa("DELETE FROM faturas WHERE id=?", id);
   refrescar("/", "/faturas", f?.projeto_id ? `/projetos/${f.projeto_id}` : "/faturas");
 }
 
@@ -397,14 +399,14 @@ export async function guardarManutencao(fd: FormData) {
     texto(fd, "notas"),
   ];
   if (id) {
-    executa(
+    await executa(
       `UPDATE manutencoes SET cliente_id=?, projeto_id=?, plano=?, valor_mensal=?, estado=?,
         inicio=?, notas=? WHERE id=?`,
       ...campos,
       id,
     );
   } else {
-    executa(
+    await executa(
       `INSERT INTO manutencoes (cliente_id, projeto_id, plano, valor_mensal, estado, inicio, notas)
        VALUES (?,?,?,?,?,?,?)`,
       ...campos,
@@ -414,7 +416,7 @@ export async function guardarManutencao(fd: FormData) {
 }
 
 export async function apagarManutencao(fd: FormData) {
-  executa("DELETE FROM manutencoes WHERE id=?", numero(fd, "id"));
+  await executa("DELETE FROM manutencoes WHERE id=?", numero(fd, "id"));
   refrescar("/", "/manutencao");
 }
 

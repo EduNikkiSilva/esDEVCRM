@@ -1,3 +1,9 @@
+const opcoesData: Intl.DateTimeFormatOptions = {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+};
+
 const moeda = new Intl.NumberFormat("pt-PT", {
   style: "currency",
   currency: "EUR",
@@ -15,11 +21,12 @@ export const eur2 = (v: number | null | undefined) => moedaExata.format(v ?? 0);
 
 export const pct = (v: number) => `${(v * 100).toFixed(0)}%`;
 
-export function data(valor?: string | null) {
+export function data(valor?: string | Date | null) {
   if (!valor) return "—";
+  if (valor instanceof Date) return valor.toLocaleDateString("pt-PT", opcoesData);
   const d = new Date(valor.length <= 10 ? `${valor}T00:00:00` : valor.replace(" ", "T"));
   if (Number.isNaN(d.getTime())) return valor;
-  return d.toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" });
+  return d.toLocaleDateString("pt-PT", opcoesData);
 }
 
 export const hoje = () => new Date().toISOString().slice(0, 10);

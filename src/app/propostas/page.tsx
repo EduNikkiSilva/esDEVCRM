@@ -25,8 +25,8 @@ const COR_ESTADO: Record<string, string> = {
 // Lê a base de dados local a cada pedido.
 export const dynamic = "force-dynamic";
 
-export default function PropostasPage() {
-  const propostas = listarTodasPropostas();
+export default async function PropostasPage() {
+  const propostas = await listarTodasPropostas();
   const enviadas = propostas.filter((p) => p.estado === "Enviada");
   const aceites = propostas.filter((p) => p.estado === "Aceite");
   const taxa = propostas.length

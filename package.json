@@ -10,8 +10,8 @@
     "dados-exemplo": "node scripts/dados-exemplo.mjs",
     "calculadora-excel": "python scripts/gerar_calculadora.py Calculadora_Precos_esDEV.xlsx",
     "teste-interface": "node scripts/teste-interface.mjs",
-    "limpar-dados": "node scripts/limpar-dados.mjs",
-    "teste-autenticacao": "node scripts/teste-autenticacao.mjs"
+    "teste-autenticacao": "node scripts/teste-autenticacao.mjs",
+    "limpar-dados": "node scripts/limpar-dados.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -21,6 +21,7 @@
     "lucide-react": "^1.33.0",
     "next": "16.3.2",
     "next-themes": "^0.4.6",
+    "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^3.8.0",
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.13.3",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

@@ -9,38 +9,16 @@
  *   npm run limpar-dados              # mostra o que existe e não apaga nada
  *   npm run limpar-dados -- --sim     # apaga a sério
  */
-import fs from "node:fs";
-import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { TABELAS, abrir, usaPostgres } from "./lib-bd.mjs";
 
-const caminho = process.env.ESDEV_DB ?? path.join(process.cwd(), "data", "esdev.db");
+const db = await abrir();
 
-if (!fs.existsSync(caminho)) {
-  console.log(`Não existe base de dados em ${caminho}. Já está tudo a zero.`);
-  process.exit(0);
-}
-
-const db = new DatabaseSync(caminho);
-db.exec("PRAGMA foreign_keys = OFF");
-
-// Ordem inversa das dependências, para não haver referências penduradas.
-const TABELAS = [
-  "tarefas",
-  "faturas",
-  "manutencoes",
-  "propostas",
-  "analises",
-  "briefings",
-  "projetos",
-  "leads",
-  "clientes",
-];
-
-const contar = (t) => db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get().n;
-const antes = TABELAS.map((t) => [t, contar(t)]);
+const contar = async (t) => Number((await db.consulta(`SELECT COUNT(*) AS n FROM ${t}`))[0].n);
+const antes = [];
+for (const t of TABELAS) antes.push([t, await contar(t)]);
 const total = antes.reduce((s, [, n]) => s + n, 0);
 
-console.log(`Base de dados: ${caminho}\n`);
+console.log(`Base de dados: ${db.etiqueta}\n`);
 for (const [t, n] of antes) console.log(`  ${t.padEnd(14)} ${n}`);
 console.log(`\n  total          ${total} registo(s)\n`);
 
@@ -55,9 +33,15 @@ if (!process.argv.includes("--sim")) {
   process.exit(0);
 }
 
-for (const t of TABELAS) db.prepare(`DELETE FROM ${t}`).run();
-// Reinicia os ids para o próximo registo ser o número 1.
-db.prepare("DELETE FROM sqlite_sequence").run();
-db.exec("VACUUM");
+for (const t of TABELAS) await db.executa(`DELETE FROM ${t}`);
+
+// Reinicia os contadores de id, para o próximo registo ser o número 1.
+if (usaPostgres) {
+  for (const t of TABELAS) await db.exec(`ALTER SEQUENCE ${t}_id_seq RESTART WITH 1`);
+} else {
+  await db.executa("DELETE FROM sqlite_sequence");
+  await db.exec("VACUUM");
+}
+await db.fechar();
 
 console.log("Apagado. O CRM está vazio e os ids começam de novo em 1.");

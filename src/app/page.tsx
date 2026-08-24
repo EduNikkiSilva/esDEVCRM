@@ -22,11 +22,11 @@ import { contagemPorFase, faturacaoMensal, indicadores, listarFaturas } from "@/
 // Lê a base de dados local a cada pedido.
 export const dynamic = "force-dynamic";
 
-export default function Dashboard() {
-  const ind = indicadores();
-  const fases = contagemPorFase();
-  const faturacao = faturacaoMensal();
-  const faturas = listarFaturas() as (ReturnType<typeof listarFaturas>[number] & {
+export default async function Dashboard() {
+  const ind = await indicadores();
+  const fases = await contagemPorFase();
+  const faturacao = await faturacaoMensal();
+  const faturas = (await listarFaturas()) as (Awaited<ReturnType<typeof listarFaturas>>[number] & {
     cliente?: string | null;
     projeto?: string | null;
   })[];

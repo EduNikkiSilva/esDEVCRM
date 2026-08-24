@@ -34,13 +34,13 @@ export const dynamic = "force-dynamic";
 
 export default async function LeadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const lead = obterLead(Number(id));
+  const lead = await obterLead(Number(id));
   if (!lead) notFound();
 
-  const briefing = obterBriefing(lead.id);
-  const analises = listarAnalises(lead.id);
+  const briefing = await obterBriefing(lead.id);
+  const analises = await listarAnalises(lead.id);
   const ultima = analises[0];
-  const propostas = listarPropostas(lead.id);
+  const propostas = await listarPropostas(lead.id);
   const inputsIniciais = ultima
     ? (JSON.parse(ultima.inputs) as InputsCalculadora)
     : undefined;

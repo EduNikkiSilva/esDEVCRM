@@ -1,4 +1,4 @@
-import { consulta, primeiro } from "@/lib/db";
+import { consulta, mesDe, primeiro, semAcento } from "@/lib/db";
 import { FASES_ABERTAS } from "@/lib/dominio";
 
 export type Cliente = {
@@ -103,13 +103,13 @@ export type Manutencao = {
 };
 
 export const listarClientes = () =>
-  consulta<Cliente>("SELECT * FROM clientes ORDER BY empresa COLLATE NOCASE");
+  consulta<Cliente>(`SELECT * FROM clientes ORDER BY ${semAcento("empresa")}`);
 
 export const obterCliente = (id: number) =>
   primeiro<Cliente>("SELECT * FROM clientes WHERE id = ?", id);
 
 export const listarLeads = () =>
-  consulta<Lead>("SELECT * FROM leads ORDER BY datetime(atualizado_em) DESC");
+  consulta<Lead>("SELECT * FROM leads ORDER BY atualizado_em DESC");
 
 export const obterLead = (id: number) => primeiro<Lead>("SELECT * FROM leads WHERE id = ?", id);
 
@@ -156,7 +156,7 @@ export const listarFaturas = (projetoId?: number) =>
         `SELECT f.*, c.empresa AS cliente, p.nome AS projeto FROM faturas f
          LEFT JOIN clientes c ON c.id = f.cliente_id
          LEFT JOIN projetos p ON p.id = f.projeto_id
-         ORDER BY f.estado = 'Paga', datetime(COALESCE(f.emitida_em, f.criado_em)) DESC`,
+         ORDER BY f.estado = 'Paga', COALESCE(f.emitida_em, f.criado_em) DESC`,
       );
 
 export const projetosDoCliente = (clienteId: number) =>
@@ -186,28 +186,28 @@ export const listarTarefas = (projetoId: number) =>
   );
 
 /** §22 — indicadores do sistema financeiro. */
-export function indicadores() {
+export async function indicadores() {
   const placeholders = FASES_ABERTAS.map(() => "?").join(",");
-  const pipeline = primeiro<{ total: number; n: number }>(
+  const pipeline = await primeiro<{ total: number; n: number }>(
     `SELECT COALESCE(SUM(valor_estimado), 0) AS total, COUNT(*) AS n
      FROM leads WHERE fase IN (${placeholders})`,
     ...FASES_ABERTAS,
   );
-  const recebido = primeiro<{ total: number }>(
+  const recebido = await primeiro<{ total: number }>(
     "SELECT COALESCE(SUM(valor), 0) AS total FROM faturas WHERE estado = 'Paga'",
   );
-  const emFalta = primeiro<{ total: number }>(
+  const emFalta = await primeiro<{ total: number }>(
     "SELECT COALESCE(SUM(valor), 0) AS total FROM faturas WHERE estado = 'Pendente'",
   );
-  const mrr = primeiro<{ total: number; n: number }>(
+  const mrr = await primeiro<{ total: number; n: number }>(
     "SELECT COALESCE(SUM(valor_mensal), 0) AS total, COUNT(*) AS n FROM manutencoes WHERE estado = 'Ativo'",
   );
-  const projetosAtivos = primeiro<{ n: number; preco: number; horas: number; reais: number }>(
+  const projetosAtivos = await primeiro<{ n: number; preco: number; horas: number; reais: number }>(
     `SELECT COUNT(*) AS n, COALESCE(SUM(preco), 0) AS preco,
             COALESCE(SUM(horas_estimadas), 0) AS horas, COALESCE(SUM(horas_reais), 0) AS reais
      FROM projetos WHERE estado NOT IN ('Entregue')`,
   );
-  const rentabilidade = consulta<{
+  const rentabilidade = await consulta<{
     id: number;
     nome: string;
     preco: number;
@@ -229,13 +229,13 @@ export function indicadores() {
 }
 
 /** Faturação dos últimos 6 meses, separada entre recebido e pendente. */
-export function faturacaoMensal() {
-  const linhas = consulta<{ mes: string; estado: string; total: number }>(
-    `SELECT strftime('%Y-%m', COALESCE(paga_em, emitida_em, criado_em)) AS mes,
-            estado, SUM(valor) AS total
+export async function faturacaoMensal() {
+  const coluna = mesDe("COALESCE(paga_em, emitida_em, criado_em)");
+  const linhas = await consulta<{ mes: string; estado: string; total: number }>(
+    `SELECT ${coluna} AS mes, estado, SUM(valor) AS total
      FROM faturas
      WHERE estado <> 'Anulada'
-     GROUP BY mes, estado`,
+     GROUP BY ${coluna}, estado`,
   );
 
   const meses: { mes: string; etiqueta: string; recebido: number; pendente: number }[] = [];
@@ -260,8 +260,8 @@ export function faturacaoMensal() {
   return meses;
 }
 
-export function contagemPorFase() {
-  const linhas = consulta<{ fase: string; n: number; total: number }>(
+export async function contagemPorFase() {
+  const linhas = await consulta<{ fase: string; n: number; total: number }>(
     "SELECT fase, COUNT(*) AS n, COALESCE(SUM(valor_estimado),0) AS total FROM leads GROUP BY fase",
   );
   return new Map(linhas.map((l) => [l.fase, l]));
