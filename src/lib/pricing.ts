@@ -1,1 +1,1 @@
-// TEST WRITE
+// TODO: pricing values will be applied in the next commit.
