@@ -88,6 +88,53 @@ Transversal à app:
    checklist de entrega.
 7. Entregue → o contrato de manutenção passa a contar na receita recorrente.
 
+## Trabalhar com GitHub
+
+O repositório deve ser **privado**: contém tabelas de preços, margens e posicionamento
+comercial da esDEV. A pasta `data/` está ignorada pelo Git, por isso a base de dados com
+clientes reais e o logótipo que carregares nunca são enviados para o GitHub — só o código.
+
+### Publicar pela primeira vez
+
+Cria no GitHub um repositório privado e vazio chamado `esDEVCRM` (sem README nem
+`.gitignore`, para não colidir), e depois, dentro de `Documents\esDEVCRM`:
+
+```powershell
+# Se a pasta veio de um ZIP e ainda não tem histórico Git
+git init -b main
+git add .
+git commit -m "esDEV CRM"
+git remote add origin https://github.com/<o-teu-utilizador>/esDEVCRM.git
+git push -u origin main
+```
+
+Se a pasta já foi clonada com histórico, mantém o remoto antigo com outro nome e acrescenta
+o GitHub como principal:
+
+```powershell
+git remote rename origin cursor
+git remote add origin https://github.com/<o-teu-utilizador>/esDEVCRM.git
+git push -u origin main
+```
+
+### No dia a dia
+
+```powershell
+git pull                 # trazer alterações
+git add -A
+git commit -m "descrição curta do que mudou"
+git push
+```
+
+Cada push corre as verificações de `.github/workflows/ci.yml` no GitHub: lint, tipos e build.
+Se algo quebrar, aparece o visto vermelho antes de estragares a instalação local.
+
+### Trabalho com agentes
+
+Depois de o repositório estar no GitHub, é aí que deves ligar os agentes do Cursor: cada
+tarefa fica numa branch, revês o diff e fazes merge. Fica tudo com histórico e com CI, em vez
+de ficheiros copiados à mão.
+
 ## Logótipo
 
 A aplicação traz o logótipo esDEV em vetor (`src/components/logotipo.tsx`), usado na barra
