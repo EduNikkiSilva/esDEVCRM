@@ -91,13 +91,15 @@ export function CalculadoraPrecos({
                         onClick={() => atualizar({ pacoteId: p.id })}
                         className={`rounded-lg border p-3 text-left transition-colors ${
                           ativo
-                            ? "border-primary bg-primary text-white"
+                            ? "border-primary bg-primary text-primary-foreground"
                             : "border-border bg-card hover:border-ring"
                         }`}
                       >
                         <p className="text-sm font-semibold">{p.nome}</p>
                         <p
-                          className={`mt-0.5 text-xs ${ativo ? "text-muted-foreground/40" : "text-muted-foreground"}`}
+                          className={`mt-0.5 text-xs ${
+                            ativo ? "text-primary-foreground/80" : "text-muted-foreground"
+                          }`}
                         >
                           {p.descricao}
                         </p>
@@ -105,7 +107,9 @@ export function CalculadoraPrecos({
                           {eur(p.minimo)} · {eur(p.recomendado)} · {eur(p.premium)}
                         </p>
                         <p
-                          className={`mt-0.5 text-[11px] ${ativo ? "text-muted-foreground/70" : "text-muted-foreground/70"}`}
+                          className={`mt-0.5 text-[11px] ${
+                            ativo ? "text-primary-foreground/70" : "text-muted-foreground/70"
+                          }`}
                         >
                           Mercado: {p.mercado}
                         </p>
@@ -314,12 +318,12 @@ export function CalculadoraPrecos({
                 <div
                   key={l.rotulo}
                   className={`flex items-baseline justify-between rounded-md px-3 py-2 ${
-                    l.destaque ? "bg-primary text-white" : "bg-secondary"
+                    l.destaque ? "bg-primary text-primary-foreground" : "bg-secondary"
                   }`}
                 >
                   <span className="text-xs">
                     {l.rotulo}
-                    <span className={l.destaque ? "text-muted-foreground/70" : "text-muted-foreground"}>
+                    <span className={l.destaque ? "text-primary-foreground/70" : "text-muted-foreground"}>
                       {" "}
                       · {l.nota}
                     </span>

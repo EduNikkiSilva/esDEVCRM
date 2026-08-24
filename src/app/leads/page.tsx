@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FolderKanban, Plus } from "lucide-react";
+import { FolderKanban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QuadroPipeline } from "@/components/quadro-pipeline";
 import { PageHeader, Stat, Vazio } from "@/components/ui-kit";
@@ -35,11 +35,6 @@ export default async function LeadsPage({
             <Link href="/leads">Ver pipeline completo</Link>
           </Button>
         ) : null}
-        <Button asChild>
-          <Link href="/leads/nova">
-            <Plus className="size-4" /> Nova lead
-          </Link>
-        </Button>
       </PageHeader>
 
       {leads.length > 0 ? (

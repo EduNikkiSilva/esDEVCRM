@@ -25,6 +25,19 @@ npm run dev             # desenvolvimento, http://localhost:43127
 npm run build && npm start   # uso normal, arranca mais rápido
 ```
 
+Não corras `npm run build` com o `npm run dev` ligado: partilham a pasta `.next` e o
+servidor de desenvolvimento passa a devolver 403 aos ficheiros de JavaScript, deixando a
+página sem interatividade.
+
+Para verificar que as interações do lado do cliente estão de pé (tema, paleta `Ctrl+K`,
+calculadora, menu em telemóvel, arrastar no pipeline, gráfico e notificações), com a app a
+correr:
+
+```bash
+npx playwright install chromium   # uma vez
+npm run teste-interface
+```
+
 A base de dados é criada automaticamente no primeiro arranque. Para a guardar noutro sítio
 (uma pasta sincronizada, por exemplo), define `ESDEV_DB`:
 

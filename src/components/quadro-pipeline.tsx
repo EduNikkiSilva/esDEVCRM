@@ -34,9 +34,10 @@ export function QuadroPipeline({
   const [, iniciar] = useTransition();
   const router = useRouter();
 
-  const largar = (fase: Fase) => {
+  const largar = (fase: Fase, idDoEvento?: number) => {
     setAlvo(null);
-    const id = aArrastar;
+    // O id viaja no próprio evento; o estado serve só para o efeito visual.
+    const id = idDoEvento || aArrastar;
     setAArrastar(null);
     if (!id) return;
     const lead = leads.find((l) => l.id === id);
@@ -63,7 +64,10 @@ export function QuadroPipeline({
               setAlvo(fase);
             }}
             onDragLeave={() => setAlvo((a) => (a === fase ? null : a))}
-            onDrop={() => largar(fase)}
+            onDrop={(e) => {
+              e.preventDefault();
+              largar(fase, Number(e.dataTransfer.getData("text/plain")) || undefined);
+            }}
             className={cn(
               "w-[17rem] shrink-0 rounded-2xl border bg-card/50 p-2.5 transition-colors",
               alvo === fase ? "border-primary bg-accent/40" : "border-border",
@@ -89,7 +93,11 @@ export function QuadroPipeline({
                   <article
                     key={l.id}
                     draggable
-                    onDragStart={() => setAArrastar(l.id)}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData("text/plain", String(l.id));
+                      e.dataTransfer.effectAllowed = "move";
+                      setAArrastar(l.id);
+                    }}
                     onDragEnd={() => setAArrastar(null)}
                     className={cn(
                       "cartao-suave group cursor-grab rounded-xl border border-border bg-card p-3 transition-all active:cursor-grabbing",

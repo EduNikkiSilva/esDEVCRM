@@ -149,7 +149,7 @@ function CampoDinamico({
                   onClick={() => alternarMulti(campo.id, o)}
                   className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
                     ativo
-                      ? "border-primary bg-primary text-white"
+                      ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-card text-muted-foreground hover:border-ring"
                   }`}
                 >

@@ -156,13 +156,15 @@ export default function Dashboard() {
 
       <section className="mt-4 grid gap-4 lg:grid-cols-3">
         <Card className="cartao-suave lg:col-span-2">
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle className="text-sm">Pipeline por fase</CardTitle>
-            <Button asChild size="sm" variant="ghost">
-              <Link href="/leads">
-                Abrir <ArrowRight className="size-4" />
-              </Link>
-            </Button>
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className="text-sm">Pipeline por fase</CardTitle>
+              <Button asChild size="sm" variant="ghost">
+                <Link href="/leads">
+                  Abrir <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-1">
             {FASES.map((fase) => {
@@ -191,13 +193,15 @@ export default function Dashboard() {
         </Card>
 
         <Card className="cartao-suave">
-          <CardHeader className="flex-row items-center justify-between">
-            <CardTitle className="text-sm">Por receber</CardTitle>
-            <Button asChild size="sm" variant="ghost">
-              <Link href="/faturas">
-                Faturação <ArrowRight className="size-4" />
-              </Link>
-            </Button>
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className="text-sm">Por receber</CardTitle>
+              <Button asChild size="sm" variant="ghost">
+                <Link href="/faturas">
+                  Faturação <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {pendentes.length === 0 ? (
