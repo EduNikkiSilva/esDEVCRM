@@ -1,69 +1,116 @@
 # Instalação do esDEV CRM no Windows.
 #
-#   Executar dentro da pasta do projeto:
-#       powershell -ExecutionPolicy Bypass -File .\instalar.ps1
+#   powershell -ExecutionPolicy Bypass -File .\instalar.ps1
 #
-# Instala dependências, compila a aplicação e cria atalhos "esDEV CRM" no
-# Ambiente de Trabalho e no menu Iniciar. Avisa se a pasta estiver sincronizada
-# com o OneDrive, porque a base de dados não deve viver numa pasta sincronizada.
+# O que faz, por esta ordem:
+#   1. Cria C:\Users\<tu>\Documents\esDEVCRM (ou o -Destino que indicares).
+#   2. Copia o projeto para lá, se ainda não estiver.
+#   3. Instala dependências e compila.
+#   4. Cria atalhos "esDEV CRM" no Ambiente de Trabalho e no menu Iniciar.
+#   5. Arranca o CRM.
+#
+# Exemplos:
+#   .\instalar.ps1
+#   .\instalar.ps1 -Destino "D:\esDEVCRM"
+#   .\instalar.ps1 -NaoArrancar
+
+param(
+  [string]$Destino = (Join-Path $env:USERPROFILE "Documents\esDEVCRM"),
+  [switch]$NaoArrancar
+)
 
 $ErrorActionPreference = "Stop"
-$raiz = Split-Path -Parent $MyInvocation.MyCommand.Path
-Set-Location $raiz
+$origem = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 Write-Host ""
-Write-Host "  esDEV CRM — instalação" -ForegroundColor Cyan
-Write-Host "  Pasta: $raiz"
+Write-Host "  esDEV CRM - instalacao" -ForegroundColor Cyan
+Write-Host "  Origem:  $origem"
+Write-Host "  Destino: $Destino"
 Write-Host ""
 
+# --- 1 e 2. Pasta de destino ------------------------------------------------
+$mesmaPasta = $false
+if (Test-Path $Destino) {
+  $a = (Resolve-Path $origem).Path.TrimEnd("\")
+  $b = (Resolve-Path $Destino).Path.TrimEnd("\")
+  $mesmaPasta = ($a -eq $b)
+}
+
+if (-not $mesmaPasta) {
+  if (-not (Test-Path $Destino)) {
+    New-Item -ItemType Directory -Path $Destino -Force | Out-Null
+    Write-Host "  Pasta criada." -ForegroundColor Green
+  }
+
+  Write-Host "  A copiar o projeto..." -ForegroundColor Yellow
+  # node_modules e .next sao reconstruidos a seguir; copiar isso seria lento e inutil.
+  robocopy $origem $Destino /E /XD node_modules .next /NFL /NDL /NJH /NJS /NP | Out-Null
+  if ($LASTEXITCODE -ge 8) {
+    Write-Host "  Falhou a copia dos ficheiros (robocopy $LASTEXITCODE)." -ForegroundColor Red
+    exit 1
+  }
+  Write-Host "  Projeto copiado para $Destino" -ForegroundColor Green
+}
+
+Set-Location $Destino
+
+# --- 3. Dependencias e compilacao -------------------------------------------
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-  Write-Host "  Node.js não encontrado. Instala a versão LTS em https://nodejs.org e repete." -ForegroundColor Red
+  Write-Host ""
+  Write-Host "  Node.js nao encontrado. Instala a versao LTS em https://nodejs.org e repete." -ForegroundColor Red
   exit 1
 }
 Write-Host "  Node.js $(node -v)" -ForegroundColor Green
 
-Write-Host "  A instalar dependências..." -ForegroundColor Yellow
+Write-Host "  A instalar dependencias (pode levar 1-2 minutos)..." -ForegroundColor Yellow
 npm install --no-fund --no-audit
-if ($LASTEXITCODE -ne 0) { Write-Host "  Falhou a instalação de dependências." -ForegroundColor Red; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Host "  Falhou a instalacao de dependencias." -ForegroundColor Red; exit 1 }
 
 Write-Host "  A compilar..." -ForegroundColor Yellow
 npm run build
-if ($LASTEXITCODE -ne 0) { Write-Host "  Falhou a compilação." -ForegroundColor Red; exit 1 }
+if ($LASTEXITCODE -ne 0) { Write-Host "  Falhou a compilacao." -ForegroundColor Red; exit 1 }
 
-# --- Atalhos ---------------------------------------------------------------
-$lancador = Join-Path $raiz "esdev-crm.bat"
+# --- 4. Atalhos --------------------------------------------------------------
+$lancador = Join-Path $Destino "esdev-crm.bat"
 $shell = New-Object -ComObject WScript.Shell
-$destinos = @(
+$atalhos = @(
   (Join-Path ([Environment]::GetFolderPath("Desktop")) "esDEV CRM.lnk"),
   (Join-Path ([Environment]::GetFolderPath("StartMenu")) "Programs\esDEV CRM.lnk")
 )
 
-foreach ($destino in $destinos) {
-  $pasta = Split-Path -Parent $destino
+foreach ($caminho in $atalhos) {
+  $pasta = Split-Path -Parent $caminho
   if (-not (Test-Path $pasta)) { New-Item -ItemType Directory -Path $pasta -Force | Out-Null }
-  $atalho = $shell.CreateShortcut($destino)
+  $atalho = $shell.CreateShortcut($caminho)
   $atalho.TargetPath = $lancador
-  $atalho.WorkingDirectory = $raiz
+  $atalho.WorkingDirectory = $Destino
   $atalho.Description = "CRM interno da esDEV"
-  $atalho.WindowStyle = 7   # minimizado: a consola não incomoda
+  $atalho.WindowStyle = 7   # minimizado: a consola nao incomoda
   $atalho.Save()
-  Write-Host "  Atalho criado: $destino" -ForegroundColor Green
+  Write-Host "  Atalho criado: $caminho" -ForegroundColor Green
 }
 
-# --- Avisos ----------------------------------------------------------------
+# --- 5. Avisos e arranque ----------------------------------------------------
+$bd = if ($env:ESDEV_DB) { $env:ESDEV_DB } else { Join-Path $Destino "data\esdev.db" }
+
 Write-Host ""
-if ($raiz -match "OneDrive|Dropbox|Google Drive") {
-  Write-Host "  ATENÇÃO: esta pasta parece estar sincronizada com a nuvem." -ForegroundColor Yellow
-  Write-Host "  A base de dados é escrita continuamente e a sincronização pode corrompê-la."
-  Write-Host "  Recomendação: guarda os dados fora da pasta sincronizada, definindo ESDEV_DB."
-  Write-Host "  Exemplo (uma vez, permanente para o teu utilizador):" -ForegroundColor Cyan
+if ($Destino -match "OneDrive|Dropbox|Google Drive") {
+  Write-Host "  ATENCAO: esta pasta esta sincronizada com a nuvem." -ForegroundColor Yellow
+  Write-Host "  A base de dados e escrita continuamente e a sincronizacao pode corrompe-la."
+  Write-Host "  Manda apenas os dados para fora da nuvem, uma vez:" -ForegroundColor Cyan
   Write-Host '    [Environment]::SetEnvironmentVariable("ESDEV_DB", "C:\esDEV\data\esdev.db", "User")'
+  Write-Host "  Depois fecha e reabre o PowerShell."
   Write-Host ""
 }
 
-$bd = if ($env:ESDEV_DB) { $env:ESDEV_DB } else { Join-Path $raiz "data\esdev.db" }
 Write-Host "  Base de dados: $bd"
-Write-Host "  Faz cópia deste ficheiro para teres backup de tudo."
+Write-Host "  Copia este ficheiro para teres backup de tudo: leads, propostas, projetos e faturas."
 Write-Host ""
-Write-Host "  Pronto. Abre o CRM pelo atalho 'esDEV CRM' ou com .\esdev-crm.bat" -ForegroundColor Cyan
+Write-Host "  Instalacao concluida." -ForegroundColor Cyan
+Write-Host "  Abre o CRM pelo atalho 'esDEV CRM' no Ambiente de Trabalho."
 Write-Host ""
+
+if (-not $NaoArrancar) {
+  Write-Host "  A arrancar..." -ForegroundColor Yellow
+  Start-Process -FilePath $lancador -WorkingDirectory $Destino
+}

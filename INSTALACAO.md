@@ -70,16 +70,23 @@ Move-Item "C:\esDEV\crm" "$env:USERPROFILE\Documents\esDEVCRM"
 
 ## 4. Instalar e arrancar
 
-Corre uma vez, dentro da pasta:
+Corre uma vez, a partir de onde tiveres os ficheiros (a pasta do ZIP extraído serve):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\instalar.ps1
 ```
 
-Instala as dependências, compila e cria os atalhos **esDEV CRM** no Ambiente de Trabalho e
-no menu Iniciar. Depois disso basta o atalho.
+O script faz tudo: cria `C:\Users\eduar\Documents\esDEVCRM`, copia o projeto para lá,
+instala as dependências, compila, cria os atalhos **esDEV CRM** no Ambiente de Trabalho e no
+menu Iniciar, e arranca o CRM. Se preferires outro destino:
 
-Em alternativa, abre a pasta no Explorador e faz **duplo clique em `esdev-crm.bat`**.
+```powershell
+.\instalar.ps1 -Destino "D:\esDEVCRM"
+```
+
+A partir daí é sempre pelo atalho **esDEV CRM** (ou duplo clique em `esdev-crm.bat` dentro da
+pasta). Se o CRM já estiver a correr, o lançador reaproveita o servidor em vez de abrir um
+segundo.
 
 Na primeira vez ele instala as dependências e compila a aplicação (1 a 3 minutos, com
 mensagens no ecrã). Nas vezes seguintes arranca em poucos segundos. Depois:

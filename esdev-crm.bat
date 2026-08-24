@@ -41,17 +41,23 @@ if not exist ".next\BUILD_ID" (
   call npm run build || goto :erro
 )
 
+rem Se ja estiver a correr, nao arranca um segundo servidor.
+curl -s -o NUL %URL% && (
+  echo   esDEV CRM ja estava a correr. A abrir a janela...
+  goto :abrir
+)
+
 echo.
 echo   esDEV CRM a arrancar em %URL%
-echo   Deixa esta janela aberta enquanto trabalhas. Fecha-a para desligar.
+echo   A janela "esDEV CRM (servidor)" fica minimizada. Fecha-a para desligar.
 echo.
 
 start "esDEV CRM (servidor)" /min cmd /c "npm start"
 
 rem Espera que o servidor responda antes de abrir a janela da app.
 for /l %%i in (1,1,40) do (
-  timeout /t 1 /nobreak >nul
-  curl -s -o nul %URL% && goto :abrir
+  ping -n 2 127.0.0.1 >nul
+  curl -s -o NUL %URL% && goto :abrir
 )
 
 :abrir

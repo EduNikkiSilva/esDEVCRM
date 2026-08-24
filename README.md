@@ -10,8 +10,9 @@ externos nem nuvem: nada sai da tua máquina.
 
 ## Arrancar
 
-**Windows:** corre `instalar.ps1` uma vez (instala, compila e cria os atalhos) e depois abre
-pelo atalho **esDEV CRM**, ou faz duplo clique em `esdev-crm.bat`. Instala, compila e abre o CRM numa janela
+**Windows:** corre `instalar.ps1` uma vez — cria a pasta de destino, copia o projeto,
+instala, compila, cria os atalhos **esDEV CRM** e arranca. Depois é sempre pelo atalho, ou
+por duplo clique em `esdev-crm.bat`. Instala, compila e abre o CRM numa janela
 própria, sem barra de endereço, como uma app de desktop. **macOS / Linux:** `./esdev-crm.sh`.
 
 O guia completo de instalação — onde guardar a pasta, como afixar no menu Iniciar, backups e
