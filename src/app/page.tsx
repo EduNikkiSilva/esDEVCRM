@@ -16,7 +16,7 @@ import { GraficoFaturacao } from "@/components/graficos-dashboard";
 import { PageHeader, Stat, Vazio } from "@/components/ui-kit";
 import { COR_FASE, FASES, REGRAS_DE_OURO, type Fase } from "@/lib/dominio";
 import { data, eur, eur2 } from "@/lib/format";
-import { VALOR_HORA_INTERNO } from "@/lib/pricing";
+import { VALOR_HORA_ALVO, VALOR_HORA_INTERNO } from "@/lib/pricing";
 import { contagemPorFase, faturacaoMensal, indicadores, listarFaturas } from "@/lib/queries";
 
 // Lê a base de dados local a cada pedido.
@@ -107,7 +107,7 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="text-sm">Rentabilidade real</CardTitle>
             <p className="text-xs text-muted-foreground">
-              Preço ÷ horas reais. Mínimo interno: {eur(VALOR_HORA_INTERNO)}/h.
+              Preço ÷ horas reais. Piso {eur(VALOR_HORA_INTERNO)}/h · alvo {eur(VALOR_HORA_ALVO)}/h.
             </p>
           </CardHeader>
           <CardContent>
@@ -120,6 +120,7 @@ export default function Dashboard() {
                 {ind.rentabilidade.map((p) => {
                   const vh = (p.preco - p.custos_externos) / p.horas_reais;
                   const abaixo = vh < VALOR_HORA_INTERNO;
+                  const noAlvo = vh >= VALOR_HORA_ALVO;
                   return (
                     <li key={p.id}>
                       <div className="flex items-center justify-between gap-2">
@@ -131,7 +132,7 @@ export default function Dashboard() {
                         </Link>
                         <span
                           className={`num shrink-0 text-sm font-semibold ${
-                            abaixo ? "text-destructive" : "text-success"
+                            abaixo ? "text-destructive" : noAlvo ? "text-success" : "text-warning"
                           }`}
                         >
                           {eur2(vh)}/h
@@ -139,10 +140,10 @@ export default function Dashboard() {
                       </div>
                       <div className="mt-1.5 h-1.5 rounded-full bg-secondary">
                         <div
-                          className={`h-1.5 rounded-full ${abaixo ? "bg-destructive" : "bg-success"}`}
-                          style={{
-                            width: `${Math.min(100, (vh / (VALOR_HORA_INTERNO * 2)) * 100)}%`,
-                          }}
+                          className={`h-1.5 rounded-full ${
+                            abaixo ? "bg-destructive" : noAlvo ? "bg-success" : "bg-warning"
+                          }`}
+                          style={{ width: `${Math.min(100, (vh / (VALOR_HORA_ALVO * 1.5)) * 100)}%` }}
                         />
                       </div>
                     </li>
