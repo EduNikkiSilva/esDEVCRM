@@ -8,13 +8,13 @@
  *   §28 calculadora V1
  *   §29 regra de rentabilidade (valor/hora efetivo)
  *
- * Os valores das tabelas foram calibrados (V3) com preços praticados em Portugal
+ * Os valores das tabelas foram calibrados (V4) com preços praticados em Portugal
  * em 2026 — ver `src/lib/mercado.ts` para as fontes e faixas recolhidas.
  *
  * Posicionamento: a esDEV é uma marca pessoal, um freelancer a trabalhar sozinho.
- * Os preços situam-se na metade superior da faixa dos freelancers portugueses —
- * acima de quem compete por preço, longe dos valores de agência — e a capacidade
- * de entrega de uma pessoa é tratada como um limite real, não como detalhe.
+ * Os preços situam-se no meio da faixa dos freelancers portugueses — tipicamente
+ * Zaask / PME, sem valores de agência — e a capacidade de entrega de uma pessoa
+ * é tratada como um limite real, não como detalhe.
  */
 
 /**
@@ -23,13 +23,13 @@
  * ferramentas e o tempo não faturável de prospeção e propostas.
  * Mercado: freelancers de web 20–60 €/h, programadores 30–80 €/h.
  */
-export const VALOR_HORA_INTERNO = 40;
+export const VALOR_HORA_INTERNO = 32;
 
 /** Valor/hora a que um projeto bem orçamentado deve chegar. */
-export const VALOR_HORA_ALVO = 55;
+export const VALOR_HORA_ALVO = 45;
 
-/** Tarifa a apresentar para trabalho avulso fora do âmbito (mercado: 20–80 €/h). */
-export const TARIFA_HORA_ADICIONAL = { minimo: 45, maximo: 65 };
+/** Tarifa a apresentar para trabalho avulso fora do âmbito (mercado: 20–60 €/h web). */
+export const TARIFA_HORA_ADICIONAL = { minimo: 30, maximo: 50 };
 
 /** Arredondamento comercial do preço final. */
 const ARREDONDAMENTO = 10;
@@ -47,7 +47,7 @@ export type Pacote = {
 } & Escalao;
 
 /**
- * Tabela de pacotes V2 — calibrada com o mercado português de 2026.
+ * Tabela de pacotes V4 — meio da faixa freelancer portuguesa de 2026.
  * `mercado` documenta a faixa observada para o mesmo tipo de projeto, para se
  * poder justificar o preço numa negociação.
  */
@@ -58,9 +58,9 @@ export const PACOTES: Pacote[] = [
     nome: "Landing Page",
     descricao: "Uma página de captação, foco em conversão.",
     mercado: "Freelancer 300–1.000 €",
-    minimo: 450,
-    recomendado: 650,
-    premium: 900,
+    minimo: 350,
+    recomendado: 550,
+    premium: 750,
   },
   {
     id: "onepage",
@@ -68,9 +68,9 @@ export const PACOTES: Pacote[] = [
     nome: "One Page",
     descricao: "Página única com todas as secções do negócio.",
     mercado: "Freelancer 300–1.200 €",
-    minimo: 550,
-    recomendado: 750,
-    premium: 1000,
+    minimo: 450,
+    recomendado: 650,
+    premium: 900,
   },
   {
     id: "web-start",
@@ -78,9 +78,9 @@ export const PACOTES: Pacote[] = [
     nome: "Website Start",
     descricao: "Presença institucional essencial, até 5 páginas.",
     mercado: "Freelancer 500–1.500 € · portais tipo Zaask 800–1.200 €",
-    minimo: 900,
-    recomendado: 1200,
-    premium: 1600,
+    minimo: 700,
+    recomendado: 1000,
+    premium: 1400,
   },
   {
     id: "web-business",
@@ -88,9 +88,9 @@ export const PACOTES: Pacote[] = [
     nome: "Website Business",
     descricao: "Produto principal para PMEs: 5–10 páginas, CMS e SEO técnico.",
     mercado: "Freelancer 1.500–3.500 € para 5–8 páginas",
-    minimo: 1400,
-    recomendado: 1900,
-    premium: 2500,
+    minimo: 1200,
+    recomendado: 1600,
+    premium: 2100,
   },
   {
     id: "web-pro",
@@ -98,9 +98,9 @@ export const PACOTES: Pacote[] = [
     nome: "Website Pro",
     descricao: "10–15 páginas, blog/CMS, SEO e funcionalidades próprias.",
     mercado: "Freelancer 3.500–7.000 € para 10–15 páginas",
-    minimo: 2200,
-    recomendado: 3000,
-    premium: 4000,
+    minimo: 2000,
+    recomendado: 2800,
+    premium: 3800,
   },
   {
     id: "web-custom",
@@ -108,9 +108,9 @@ export const PACOTES: Pacote[] = [
     nome: "Website Custom",
     descricao: "Design e desenvolvimento à medida, com integrações.",
     mercado: "Website personalizado com integrações 2.500–15.000 €",
-    minimo: 3500,
-    recomendado: 5000,
-    premium: 7000,
+    minimo: 2800,
+    recomendado: 4000,
+    premium: 5500,
   },
   {
     id: "eco-start",
@@ -118,9 +118,9 @@ export const PACOTES: Pacote[] = [
     nome: "E-commerce Start",
     descricao: "Loja essencial sobre template, catálogo reduzido.",
     mercado: "Template com adaptação de marca 2.000–3.500 €",
-    minimo: 1800,
-    recomendado: 2300,
-    premium: 2900,
+    minimo: 1500,
+    recomendado: 2000,
+    premium: 2600,
   },
   {
     id: "eco-business",
@@ -128,19 +128,19 @@ export const PACOTES: Pacote[] = [
     nome: "E-commerce Business",
     descricao: "Loja semi-custom com gestão de encomendas e pagamentos PT.",
     mercado: "Freelancer 2.000–8.000 € · semi-custom 3.500–5.500 €",
-    minimo: 2600,
-    recomendado: 3400,
-    premium: 4300,
+    minimo: 2200,
+    recomendado: 2900,
+    premium: 3700,
   },
   {
     id: "eco-pro",
     categoria: "E-commerce",
     nome: "E-commerce Pro",
     descricao: "Catálogo grande, variantes, stock e integrações.",
-    mercado: "Topo da faixa freelancer: 5.500–8.000 €",
-    minimo: 4200,
-    recomendado: 5500,
-    premium: 7000,
+    mercado: "Faixa freelancer: 5.500–8.000 €",
+    minimo: 3500,
+    recomendado: 4500,
+    premium: 5800,
   },
   {
     id: "eco-custom",
@@ -148,9 +148,9 @@ export const PACOTES: Pacote[] = [
     nome: "E-commerce Custom",
     descricao: "Loja à medida, com ERP e regras próprias. Projeto longo para uma pessoa.",
     mercado: "Custom / headless 8.000–25.000 €",
-    minimo: 7000,
-    recomendado: 9500,
-    premium: 13000,
+    minimo: 5500,
+    recomendado: 7500,
+    premium: 10000,
   },
   {
     id: "crm-base",
@@ -158,9 +158,9 @@ export const PACOTES: Pacote[] = [
     nome: "CRM Base",
     descricao: "Leads, clientes, tarefas e dashboards essenciais.",
     mercado: "Implementação em PME pequena 3.000–8.000 €",
-    minimo: 3500,
-    recomendado: 4500,
-    premium: 6000,
+    minimo: 2800,
+    recomendado: 3800,
+    premium: 5000,
   },
   {
     id: "crm-business",
@@ -168,9 +168,9 @@ export const PACOTES: Pacote[] = [
     nome: "CRM Business",
     descricao: "Módulos adicionais, permissões, integrações e migração.",
     mercado: "PME média 8.000–25.000 €",
-    minimo: 6500,
-    recomendado: 9000,
-    premium: 12000,
+    minimo: 5000,
+    recomendado: 7000,
+    premium: 9500,
   },
   {
     id: "crm-advanced",
@@ -179,9 +179,9 @@ export const PACOTES: Pacote[] = [
     descricao:
       "Sistema crítico e multi-equipa. Acima da capacidade de uma pessoa: prever parceria ou subcontratação.",
     mercado: "CRM avançado 25.000–50.000 € (tipicamente equipas)",
-    minimo: 13000,
-    recomendado: 18000,
-    premium: 25000,
+    minimo: 10000,
+    recomendado: 14000,
+    premium: 20000,
   },
   {
     id: "portal",
@@ -189,9 +189,9 @@ export const PACOTES: Pacote[] = [
     nome: "Portal / Área de membros",
     descricao: "Reservas, membros ou área de cliente como produto principal.",
     mercado: "Plataforma com membros ou reservas 5.000–30.000 €",
-    minimo: 3500,
-    recomendado: 5000,
-    premium: 7500,
+    minimo: 2800,
+    recomendado: 4000,
+    premium: 6000,
   },
   {
     id: "plataforma",
@@ -199,9 +199,9 @@ export const PACOTES: Pacote[] = [
     nome: "Plataforma / Web app à medida",
     descricao: "Produto web multi-utilizador, com regras de negócio próprias.",
     mercado: "Webapp por freelancer 8.000–30.000 €",
-    minimo: 6500,
-    recomendado: 9500,
-    premium: 14000,
+    minimo: 5000,
+    recomendado: 7500,
+    premium: 11000,
   },
 ];
 
@@ -221,33 +221,33 @@ export type Extra = {
   grupo: GrupoExtra;
 } & Escalao;
 
-/** §9 — extras, recalibrados com os valores praticados em Portugal em 2026. */
+/** §9 — extras, calibrados para o meio da faixa freelancer PT em 2026. */
 export const EXTRAS: Extra[] = [
-  { id: "pagina-simples", nome: "Página simples adicional", grupo: "Estrutura", minimo: 90, recomendado: 120, premium: 160 },
-  { id: "pagina-complexa", nome: "Página complexa", grupo: "Estrutura", minimo: 180, recomendado: 250, premium: 320 },
-  { id: "landing-extra", nome: "Landing page adicional", grupo: "Estrutura", minimo: 250, recomendado: 350, premium: 450 },
-  { id: "pagina-sistema", nome: "Página com sistema próprio", grupo: "Estrutura", minimo: 400, recomendado: 550, premium: 750 },
-  { id: "newsletter", nome: "Newsletter", grupo: "Funcionalidades", minimo: 120, recomendado: 170, premium: 240 },
-  { id: "blog-cms", nome: "Blog / CMS", grupo: "Funcionalidades", minimo: 250, recomendado: 350, premium: 480 },
-  { id: "pesquisa", nome: "Pesquisa", grupo: "Funcionalidades", minimo: 150, recomendado: 220, premium: 300 },
-  { id: "filtros", nome: "Filtros avançados", grupo: "Funcionalidades", minimo: 300, recomendado: 450, premium: 650 },
-  { id: "reservas", nome: "Sistema de reservas", grupo: "Funcionalidades", minimo: 700, recomendado: 1000, premium: 1500 },
-  { id: "area-cliente", nome: "Área de cliente", grupo: "Funcionalidades", minimo: 700, recomendado: 1000, premium: 1500 },
-  { id: "login", nome: "Login / registo", grupo: "Funcionalidades", minimo: 300, recomendado: 450, premium: 650 },
-  { id: "multilingue", nome: "Multilingue (por idioma)", grupo: "Funcionalidades", minimo: 300, recomendado: 475, premium: 700 },
-  { id: "dashboard", nome: "Dashboard", grupo: "Funcionalidades", minimo: 500, recomendado: 800, premium: 1200 },
-  { id: "automacao", nome: "Automação", grupo: "Funcionalidades", minimo: 400, recomendado: 600, premium: 900 },
-  { id: "integracao-api", nome: "Integração API", grupo: "Integrações", minimo: 700, recomendado: 1100, premium: 1800 },
-  { id: "gateway-pagamentos", nome: "Gateway de pagamentos (MB WAY, Multibanco, cartão)", grupo: "Integrações", minimo: 200, recomendado: 320, premium: 480 },
-  { id: "faturacao-certificada", nome: "Faturação certificada (Moloni, InvoiceXpress…)", grupo: "Integrações", minimo: 280, recomendado: 420, premium: 620 },
-  { id: "transportadoras", nome: "Transportadoras e envios (CTT, DPD…)", grupo: "Integrações", minimo: 200, recomendado: 320, premium: 480 },
-  { id: "migracao-dados", nome: "Migração e limpeza de dados", grupo: "Integrações", minimo: 400, recomendado: 700, premium: 1200 },
-  { id: "formacao", nome: "Formação da equipa do cliente", grupo: "Integrações", minimo: 150, recomendado: 250, premium: 400 },
-  { id: "copywriting", nome: "Copywriting", grupo: "Conteúdo", minimo: 280, recomendado: 420, premium: 600 },
-  { id: "copywriting-full", nome: "Copywriting completo", grupo: "Conteúdo", minimo: 600, recomendado: 900, premium: 1300 },
-  { id: "fotografia-produto", nome: "Fotografia de produto (até 25 produtos)", grupo: "Conteúdo", minimo: 300, recomendado: 500, premium: 800 },
-  { id: "seo-local", nome: "SEO Local", grupo: "SEO", minimo: 250, recomendado: 380, premium: 520 },
-  { id: "seo-avancado", nome: "SEO avançado (setup e auditoria)", grupo: "SEO", minimo: 550, recomendado: 850, premium: 1250 },
+  { id: "pagina-simples", nome: "Página simples adicional", grupo: "Estrutura", minimo: 70, recomendado: 100, premium: 130 },
+  { id: "pagina-complexa", nome: "Página complexa", grupo: "Estrutura", minimo: 140, recomendado: 200, premium: 260 },
+  { id: "landing-extra", nome: "Landing page adicional", grupo: "Estrutura", minimo: 200, recomendado: 280, premium: 360 },
+  { id: "pagina-sistema", nome: "Página com sistema próprio", grupo: "Estrutura", minimo: 320, recomendado: 450, premium: 600 },
+  { id: "newsletter", nome: "Newsletter", grupo: "Funcionalidades", minimo: 100, recomendado: 140, premium: 190 },
+  { id: "blog-cms", nome: "Blog / CMS", grupo: "Funcionalidades", minimo: 200, recomendado: 280, premium: 380 },
+  { id: "pesquisa", nome: "Pesquisa", grupo: "Funcionalidades", minimo: 120, recomendado: 180, premium: 240 },
+  { id: "filtros", nome: "Filtros avançados", grupo: "Funcionalidades", minimo: 240, recomendado: 360, premium: 520 },
+  { id: "reservas", nome: "Sistema de reservas", grupo: "Funcionalidades", minimo: 550, recomendado: 800, premium: 1200 },
+  { id: "area-cliente", nome: "Área de cliente", grupo: "Funcionalidades", minimo: 550, recomendado: 800, premium: 1200 },
+  { id: "login", nome: "Login / registo", grupo: "Funcionalidades", minimo: 240, recomendado: 360, premium: 520 },
+  { id: "multilingue", nome: "Multilingue (por idioma)", grupo: "Funcionalidades", minimo: 240, recomendado: 380, premium: 560 },
+  { id: "dashboard", nome: "Dashboard", grupo: "Funcionalidades", minimo: 400, recomendado: 650, premium: 950 },
+  { id: "automacao", nome: "Automação", grupo: "Funcionalidades", minimo: 320, recomendado: 480, premium: 720 },
+  { id: "integracao-api", nome: "Integração API", grupo: "Integrações", minimo: 550, recomendado: 900, premium: 1400 },
+  { id: "gateway-pagamentos", nome: "Gateway de pagamentos (MB WAY, Multibanco, cartão)", grupo: "Integrações", minimo: 160, recomendado: 250, premium: 380 },
+  { id: "faturacao-certificada", nome: "Faturação certificada (Moloni, InvoiceXpress…)", grupo: "Integrações", minimo: 220, recomendado: 340, premium: 500 },
+  { id: "transportadoras", nome: "Transportadoras e envios (CTT, DPD…)", grupo: "Integrações", minimo: 160, recomendado: 250, premium: 380 },
+  { id: "migracao-dados", nome: "Migração e limpeza de dados", grupo: "Integrações", minimo: 320, recomendado: 550, premium: 950 },
+  { id: "formacao", nome: "Formação da equipa do cliente", grupo: "Integrações", minimo: 120, recomendado: 200, premium: 320 },
+  { id: "copywriting", nome: "Copywriting", grupo: "Conteúdo", minimo: 220, recomendado: 340, premium: 480 },
+  { id: "copywriting-full", nome: "Copywriting completo", grupo: "Conteúdo", minimo: 480, recomendado: 720, premium: 1000 },
+  { id: "fotografia-produto", nome: "Fotografia de produto (até 25 produtos)", grupo: "Conteúdo", minimo: 240, recomendado: 400, premium: 640 },
+  { id: "seo-local", nome: "SEO Local", grupo: "SEO", minimo: 200, recomendado: 300, premium: 420 },
+  { id: "seo-avancado", nome: "SEO avançado (setup e auditoria)", grupo: "SEO", minimo: 440, recomendado: 680, premium: 1000 },
 ];
 
 
@@ -265,16 +265,15 @@ export const EIXOS_COMPLEXIDADE = [
 export type EixoComplexidade = (typeof EIXOS_COMPLEXIDADE)[number]["id"];
 
 /**
- * §19 — planos de manutenção, recalibrados. O mercado português cobra 40–150 €/mês
- * por manutenção técnica, 150–400 €/mês quando inclui conteúdos e banco de horas,
- * e 400–750 €/mês em gestão completa com SEO.
+ * §19 — planos de manutenção no meio da faixa freelancer.
+ * Mercado: técnico 40–150 €/mês; com conteúdos 150–400 €/mês; gestão completa 400–750 €/mês.
  */
 export const PLANOS_MANUTENCAO = [
   {
     id: "basic",
     nome: "Manutenção Basic",
-    minimo: 39,
-    maximo: 79,
+    minimo: 29,
+    maximo: 59,
     inclui:
       "Alojamento, atualizações de segurança, SSL, backups testados, monitorização e pequenas correções.",
     mercado: "Manutenção técnica: 40–150 €/mês",
@@ -282,8 +281,8 @@ export const PLANOS_MANUTENCAO = [
   {
     id: "business",
     nome: "Manutenção Business",
-    minimo: 99,
-    maximo: 199,
+    minimo: 79,
+    maximo: 149,
     inclui:
       "Basic + 1,5h/mês de alterações de conteúdo, suporte prioritário em 1 dia útil e relatório trimestral.",
     mercado: "Manutenção com conteúdos: 150–400 €/mês",
@@ -291,8 +290,8 @@ export const PLANOS_MANUTENCAO = [
   {
     id: "pro",
     nome: "Manutenção Pro",
-    minimo: 249,
-    maximo: 450,
+    minimo: 179,
+    maximo: 349,
     inclui:
       "Business + 4h/mês de evolução, SEO contínuo, relatório mensal, SLA de 4h úteis e reunião mensal.",
     mercado: "Gestão completa com SEO: 400–750 €/mês",

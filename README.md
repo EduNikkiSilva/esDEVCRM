@@ -336,27 +336,26 @@ deteta os ficheiros ao arrancar, sem alterar código.
 ## Preços — calibração para freelancer (agosto de 2026)
 
 A esDEV é uma marca pessoal, não uma empresa com equipa. As tabelas estão calibradas para
-**freelancer profissional**: metade superior da faixa dos freelancers portugueses, sem
-competir por preço e longe dos valores de agência.
+**freelancer típico em Portugal**: meio da faixa (Zaask / PME), sem valores de agência.
 
 | Serviço | Freelancer (mercado) | Agência (mercado) | esDEV |
 |---|---|---|---|
-| Landing page | 300–1.000 € | 500–2.000 € | 450–900 € |
-| Site institucional (5–10 páginas) | 1.000–5.000 € | 2.000–10.000 € | 1.400–2.500 € |
-| Site médio (10–15 páginas) | 3.500–7.000 € | 3.000–6.000 € | 2.200–4.000 € |
-| E-commerce | 2.000–8.000 € | 3.000–15.000 € | 1.800–7.000 € |
-| E-commerce à medida / ERP | — | 10.000–50.000 € | 7.000–13.000 € |
-| Webapp / plataforma | 8.000–30.000 € | 15.000–80.000 € | 6.500–14.000 € |
-| CRM PME pequena | — | 3.000–8.000 € | 3.500–6.000 € |
-| CRM PME média | — | 8.000–25.000 € | 6.500–12.000 € |
-| Manutenção técnica | — | 40–150 €/mês | 39–79 €/mês (Basic) |
-| Manutenção com conteúdos | — | 150–400 €/mês | 99–199 €/mês (Business) |
-| Gestão completa com SEO | — | 400–750 €/mês | 249–450 €/mês (Pro) |
-| Trabalho avulso | 20–60 €/h · 40–80 €/h | — | 45–65 €/h |
+| Landing page | 300–1.000 € | 500–2.000 € | 350–750 € |
+| Site institucional (5–10 páginas) | 1.000–5.000 € | 2.000–10.000 € | 1.200–2.100 € |
+| Site médio (10–15 páginas) | 3.500–7.000 € | 3.000–6.000 € | 2.000–3.800 € |
+| E-commerce | 2.000–8.000 € | 3.000–15.000 € | 1.500–5.800 € |
+| E-commerce à medida / ERP | — | 10.000–50.000 € | 5.500–10.000 € |
+| Webapp / plataforma | 8.000–30.000 € | 15.000–80.000 € | 5.000–11.000 € |
+| CRM PME pequena | — | 3.000–8.000 € | 2.800–5.000 € |
+| CRM PME média | — | 8.000–25.000 € | 5.000–9.500 € |
+| Manutenção técnica | — | 40–150 €/mês | 29–59 €/mês (Basic) |
+| Manutenção com conteúdos | — | 150–400 €/mês | 79–149 €/mês (Business) |
+| Gestão completa com SEO | — | 400–750 €/mês | 179–349 €/mês (Pro) |
+| Trabalho avulso | 20–60 €/h · 40–80 €/h | — | 30–50 €/h |
 
-**Valor/hora com dois limites**, em vez de um só: **piso de 40 €/h**, abaixo do qual o projeto
+**Valor/hora com dois limites**, em vez de um só: **piso de 32 €/h**, abaixo do qual o projeto
 não paga IRS, Segurança Social, contabilidade, ferramentas e o tempo não faturável de
-prospeção; e **alvo de 55 €/h**, onde um orçamento bem feito deve aterrar. A calculadora
+prospeção; e **alvo de 45 €/h**, onde um orçamento bem feito deve aterrar. A calculadora
 mostra vermelho abaixo do piso, amarelo entre piso e alvo, verde no alvo.
 
 **Capacidade de entrega é um limite real.** Trabalhando sozinho, os pacotes no topo da tabela
@@ -386,7 +385,7 @@ colunas da tabela de pacotes, e mapeiam diretamente nos níveis Essential, Busin
 das propostas (§10). A mensalidade sugerida escolhe o plano do §19 pelo peso do projeto e pela
 categoria, posicionando o valor dentro da faixa do plano.
 
-O valor/hora efetivo é mostrado sempre, comparado com o piso de 40 €/h e o alvo de 55 €/h.
+O valor/hora efetivo é mostrado sempre, comparado com o piso de 32 €/h e o alvo de 45 €/h.
 Fica vermelho quando o preço não paga as horas — é o sinal de que o orçamento precisa de
 correção, não de desconto.
 
@@ -405,9 +404,9 @@ python scripts/gerar_calculadora.py Calculadora_Precos_esDEV.xlsx
 python scripts/verificar_calculadora.py   # avalia as fórmulas em 4 cenários
 ```
 
-O modelo dela é independente — parte de horas por fase e tarifas horárias (40–58 €/h),
+O modelo dela é independente — parte de horas por fase e tarifas horárias (30–50 €/h),
 enquanto o CRM parte de pacotes fechados. Serve de contraprova: um institucional de 5 páginas
-dá 2.550 € pelas horas no Excel contra 1.900 € pelo pacote no CRM, o que significa que esse
+dá ~2.000 € pelas horas no Excel contra 1.600 € pelo pacote no CRM, o que significa que esse
 pacote está no limite inferior e não deve ser descontado. O CRM é a fonte de verdade.
 
 ## Estrutura
