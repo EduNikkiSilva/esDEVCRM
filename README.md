@@ -25,6 +25,8 @@ npm install
 npm run dados-exemplo   # opcional: insere os dois exemplos do documento (§26 e §27)
 npm run dev             # desenvolvimento, http://localhost:43127
 npm run build && npm start   # uso normal, arranca mais rápido
+npm run limpar-dados         # ver quantos registos existem (não apaga)
+npm run limpar-dados -- --sim   # apagar tudo e voltar ao zero
 ```
 
 Não corras `npm run build` com o `npm run dev` ligado: partilham a pasta `.next` e o
@@ -87,6 +89,105 @@ Transversal à app:
 6. Durante o projeto: registar horas reais, avançar a fase, marcar faturas pagas e fechar a
    checklist de entrega.
 7. Entregue → o contrato de manutenção passa a contar na receita recorrente.
+
+## Acesso online e autenticação
+
+O CRM corre num endereço público protegido por **login com a conta Google**, restrito aos
+endereços de `EMAILS_PERMITIDOS` (por omissão `geral@esdev.pt`). Não há utilizadores nem
+passwords para memorizar, e a sessão dura 30 dias por dispositivo.
+
+Um URL secreto **não** é proteção: o `proxy.ts` fecha a aplicação inteira antes de qualquer
+página ser servida. Quem não tem sessão vê o ecrã de entrada e mais nada — nem os nomes dos
+módulos.
+
+```
+GOOGLE_CLIENT_ID=...           # Google Cloud → Credenciais → ID de cliente OAuth (Web)
+GOOGLE_CLIENT_SECRET=...
+SESSAO_SECRET=...              # node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+EMAILS_PERMITIDOS=geral@esdev.pt
+```
+
+Enquanto estas variáveis não existirem, a aplicação fica aberta — é o modo local — e a barra
+lateral mostra um aviso a dizer que não deve ser publicada assim.
+
+Para verificar a proteção: `npm run teste-autenticacao`. Arranca o servidor com credenciais de
+teste e confirma que todas as páginas ficam fechadas sem sessão, que um cookie assinado com
+outro segredo é recusado, que um cookie expirado é recusado e que a assinatura é verificada.
+
+### Endereço próprio
+
+O CRM é publicado como projeto próprio na Vercel, em `https://crm.esdev.pt` (ou no endereço
+`*.vercel.app` atribuído automaticamente). O guia passo a passo está em
+**[PUBLICAR.md](PUBLICAR.md)**.
+
+Se algum dia quiseres servi-lo debaixo de um caminho do site principal — `www.esdev.pt/dev` —
+o suporte está feito: compila-se com `ESDEV_BASE_PATH=/dev` e o projeto do site reescreve
+`/dev/:caminho*` para o projeto do CRM. Não é o caminho recomendado, porque obriga a
+republicar o site a cada alteração do CRM.
+
+## Base de dados: local ou alojada
+
+A camada de dados tem dois motores, escolhidos por uma variável de ambiente:
+
+| `DATABASE_URL` | Motor | Onde faz sentido |
+|---|---|---|
+| ausente | SQLite embutido no Node, ficheiro `data/esdev.db` | uso local, sem internet |
+| definido | PostgreSQL | produção na Vercel (Neon) |
+
+O SQL é escrito uma única vez: os marcadores são sempre `?` (o adaptador de Postgres traduz
+para `$1, $2, …`), os INSERT recebem `RETURNING id` automaticamente, e as poucas expressões
+que divergem entre motores estão isoladas em `AGORA`, `HOJE`, `mesDe` e `semAcento` em
+`src/lib/db.ts`. As datas são guardadas como texto ISO nos dois motores, para o comportamento
+ser idêntico.
+
+Ambos os caminhos são testados: as verificações de interface correm contra SQLite e contra um
+PostgreSQL real.
+
+```bash
+# local (SQLite)
+npm run dados-exemplo && npm run build && npm start
+
+# contra Postgres
+DATABASE_URL="postgresql://utilizador:senha@servidor/base" npm run dados-exemplo
+DATABASE_URL="postgresql://utilizador:senha@servidor/base" npm start
+```
+
+## Como trabalhamos (regras de colaboração)
+
+A `main` é tua. Eu nunca lhe faço push.
+
+1. **Tu pedes** a alteração, em texto normal.
+2. **Eu implemento e testo** aqui, e envio para uma branch com o prefixo `cursor/`.
+3. **Tu revês, decides e publicas.** O merge para a `main` é sempre teu.
+
+No teu computador, para trazer e experimentar o que eu fiz:
+
+```powershell
+cd "$env:USERPROFILE\Documents\esDEVCRM"
+git fetch origin
+git checkout cursor/<nome-da-branch>
+npm install            # só se as dependências mudaram
+npm run dev            # experimentar em http://localhost:43127
+```
+
+Se gostares, o merge com a tua assinatura num único commit:
+
+```powershell
+git checkout main
+git merge --squash cursor/<nome-da-branch>
+git commit -m "descrição da alteração"
+git push
+```
+
+O `--squash` junta o meu trabalho num só commit, assinado por ti — a `main` fica com o teu
+histórico, limpo. Se não gostares, `git checkout main` e ignoras a branch; nada se perdeu.
+
+Para apagar branches já integradas:
+
+```powershell
+git branch -d cursor/<nome-da-branch>
+git push origin --delete cursor/<nome-da-branch>
+```
 
 ## Fazer alterações
 
@@ -218,30 +319,36 @@ public/logo-branco.png   → versão para fundos escuros, usada na barra lateral
 Se só tiveres uma versão, coloca-a como `logo.png` — é usada nos dois sítios. A aplicação
 deteta os ficheiros ao arrancar, sem alterar código.
 
-## Preços — calibração V2 (agosto de 2026)
+## Preços — calibração para freelancer (agosto de 2026)
 
-As tabelas não são as do documento V1: foram recalibradas com preços praticados em Portugal
-em 2026, recolhidos de publicações portuguesas de referência. O posicionamento é o do §2 —
-acima do freelancer de entrada, abaixo da agência.
+A esDEV é uma marca pessoal, não uma empresa com equipa. As tabelas estão calibradas para
+**freelancer profissional**: metade superior da faixa dos freelancers portugueses, sem
+competir por preço e longe dos valores de agência.
 
 | Serviço | Freelancer (mercado) | Agência (mercado) | esDEV |
 |---|---|---|---|
-| Landing page | 300–1.000 € | 500–2.000 € | 600–1.200 € |
-| Site institucional (5–10 páginas) | 1.000–5.000 € | 2.000–10.000 € | 1.900–3.400 € |
-| Site médio (10–15 páginas) | 3.500–7.000 € | 3.000–6.000 € | 3.000–5.500 € |
-| E-commerce (até 100 produtos) | 2.000–8.000 € | 3.000–15.000 € | 2.400–10.000 € |
-| E-commerce à medida / ERP | — | 10.000–50.000 € | 10.000–22.000 € |
-| Webapp / plataforma à medida | 8.000–30.000 € | 15.000–80.000 € | 9.000–25.000 € |
-| CRM PME pequena | — | 3.000–8.000 € | 4.500–8.000 € |
-| CRM PME média | — | 8.000–25.000 € | 9.000–18.000 € |
-| Manutenção técnica | — | 40–150 €/mês | 45–95 €/mês (Basic) |
-| Manutenção com conteúdos | — | 150–400 €/mês | 130–280 €/mês (Business) |
-| Gestão completa com SEO | — | 400–750 €/mês | 320–650 €/mês (Pro) |
-| Trabalho avulso | 20–60 €/h · 40–80 €/h | — | 50–75 €/h |
+| Landing page | 300–1.000 € | 500–2.000 € | 450–900 € |
+| Site institucional (5–10 páginas) | 1.000–5.000 € | 2.000–10.000 € | 1.400–2.500 € |
+| Site médio (10–15 páginas) | 3.500–7.000 € | 3.000–6.000 € | 2.200–4.000 € |
+| E-commerce | 2.000–8.000 € | 3.000–15.000 € | 1.800–7.000 € |
+| E-commerce à medida / ERP | — | 10.000–50.000 € | 7.000–13.000 € |
+| Webapp / plataforma | 8.000–30.000 € | 15.000–80.000 € | 6.500–14.000 € |
+| CRM PME pequena | — | 3.000–8.000 € | 3.500–6.000 € |
+| CRM PME média | — | 8.000–25.000 € | 6.500–12.000 € |
+| Manutenção técnica | — | 40–150 €/mês | 39–79 €/mês (Basic) |
+| Manutenção com conteúdos | — | 150–400 €/mês | 99–199 €/mês (Business) |
+| Gestão completa com SEO | — | 400–750 €/mês | 249–450 €/mês (Pro) |
+| Trabalho avulso | 20–60 €/h · 40–80 €/h | — | 45–65 €/h |
 
-O valor/hora interno mínimo passou de 35 € para **45 €/h**: é o piso abaixo do qual um projeto
-não paga custos, impostos e tempo não faturável, num mercado onde programadores freelance
-cobram 30–80 €/h.
+**Valor/hora com dois limites**, em vez de um só: **piso de 40 €/h**, abaixo do qual o projeto
+não paga IRS, Segurança Social, contabilidade, ferramentas e o tempo não faturável de
+prospeção; e **alvo de 55 €/h**, onde um orçamento bem feito deve aterrar. A calculadora
+mostra vermelho abaixo do piso, amarelo entre piso e alvo, verde no alvo.
+
+**Capacidade de entrega é um limite real.** Trabalhando sozinho, os pacotes no topo da tabela
+(CRM Advanced, e-commerce à medida) ocupam meses inteiros e concentram todo o risco numa
+pessoa. O CRM Advanced está marcado como exigindo parceria ou subcontratação — não é preço,
+é honestidade sobre o que uma pessoa entrega.
 
 As faixas de mercado e as fontes (com links) estão na página **Referências** da aplicação e em
 `src/lib/mercado.ts`. Revê-las anualmente, ou assim que houver 10 projetos fechados com horas
@@ -265,8 +372,8 @@ colunas da tabela de pacotes, e mapeiam diretamente nos níveis Essential, Busin
 das propostas (§10). A mensalidade sugerida escolhe o plano do §19 pelo peso do projeto e pela
 categoria, posicionando o valor dentro da faixa do plano.
 
-O valor/hora efetivo é mostrado sempre, comparado com o mínimo interno de 45 €/h. Fica
-vermelho quando o preço não paga as horas — é o sinal do §29 de que o orçamento precisa de
+O valor/hora efetivo é mostrado sempre, comparado com o piso de 40 €/h e o alvo de 55 €/h.
+Fica vermelho quando o preço não paga as horas — é o sinal de que o orçamento precisa de
 correção, não de desconto.
 
 Onde afinar: `src/lib/pricing.ts` tem as tabelas de pacotes, extras, planos de manutenção e
@@ -284,10 +391,10 @@ python scripts/gerar_calculadora.py Calculadora_Precos_esDEV.xlsx
 python scripts/verificar_calculadora.py   # avalia as fórmulas em 4 cenários
 ```
 
-O modelo dela é independente — parte de horas por fase e tarifas horárias (55–70 €/h,
-alinhadas com o mercado), enquanto o CRM parte de pacotes fechados. Os dois convergem nos
-mesmos valores para os casos típicos (um institucional de 5 páginas dá 2.950 € no Excel e
-2.600 € no CRM), mas o CRM é a fonte de verdade; o Excel é o instrumento de apoio.
+O modelo dela é independente — parte de horas por fase e tarifas horárias (40–58 €/h),
+enquanto o CRM parte de pacotes fechados. Serve de contraprova: um institucional de 5 páginas
+dá 2.550 € pelas horas no Excel contra 1.900 € pelo pacote no CRM, o que significa que esse
+pacote está no limite inferior e não deve ser descontado. O CRM é a fonte de verdade.
 
 ## Estrutura
 

@@ -9,6 +9,14 @@
 
 export const MERCADO_ATUALIZADO_EM = "Agosto de 2026";
 
+/**
+ * A esDEV é uma marca pessoal, não uma empresa com equipa. O posicionamento é o
+ * de freelancer profissional: metade superior da faixa dos freelancers
+ * portugueses, sem competir por preço e sem valores de agência.
+ */
+export const POSICIONAMENTO =
+  "Freelancer profissional — metade superior da faixa dos freelancers portugueses, longe dos valores de agência.";
+
 export type FaixaMercado = {
   servico: string;
   freelancer?: string;
@@ -22,81 +30,81 @@ export const FAIXAS_MERCADO: FaixaMercado[] = [
     servico: "Landing page (1 página)",
     freelancer: "300–1.000 €",
     agencia: "500–2.000 €",
-    esdev: "600–1.200 €",
+    esdev: "450–900 €",
   },
   {
     servico: "Site institucional (5–10 páginas)",
     freelancer: "1.000–5.000 €",
     agencia: "2.000–10.000 €",
-    esdev: "1.900–3.400 €",
+    esdev: "1.400–2.500 €",
   },
   {
     servico: "Site médio de empresa (10–15 páginas)",
     freelancer: "3.500–7.000 €",
     agencia: "3.000–6.000 € típico",
-    esdev: "3.000–5.500 €",
+    esdev: "2.200–4.000 €",
   },
   {
     servico: "E-commerce (até 100 produtos)",
     freelancer: "2.000–8.000 €",
     agencia: "3.000–15.000 €",
-    esdev: "2.400–10.000 €",
+    esdev: "1.800–7.000 €",
   },
   {
     servico: "E-commerce à medida / com ERP",
     agencia: "10.000–50.000 €",
-    esdev: "10.000–22.000 €",
+    esdev: "7.000–13.000 €",
   },
   {
     servico: "Plataforma com membros ou reservas",
     freelancer: "5.000–30.000 €",
-    esdev: "5.000–12.000 €",
+    esdev: "3.500–7.500 €",
   },
   {
     servico: "Webapp / plataforma à medida",
     freelancer: "8.000–30.000 €",
     agencia: "15.000–80.000 €",
-    esdev: "9.000–25.000 €",
+    esdev: "6.500–14.000 €",
   },
   {
     servico: "CRM — PME pequena (5–15 utilizadores)",
     agencia: "3.000–8.000 €",
-    esdev: "4.500–8.000 €",
+    esdev: "3.500–6.000 €",
   },
   {
     servico: "CRM — PME média (15–50 utilizadores)",
     agencia: "8.000–25.000 €",
-    esdev: "9.000–18.000 €",
+    esdev: "6.500–12.000 €",
   },
   {
     servico: "CRM complexo com integrações",
     agencia: "25.000–80.000 €",
-    esdev: "20.000–40.000 €",
+    esdev: "13.000–25.000 € (exige parceria)",
   },
   {
     servico: "Manutenção técnica",
     agencia: "40–150 €/mês",
-    esdev: "45–95 €/mês (Basic)",
+    esdev: "39–79 €/mês (Basic)",
   },
   {
     servico: "Manutenção com conteúdos e banco de horas",
     agencia: "150–400 €/mês",
-    esdev: "130–280 €/mês (Business)",
+    esdev: "99–199 €/mês (Business)",
   },
   {
     servico: "Gestão completa com SEO contínuo",
     agencia: "400–750 €/mês",
-    esdev: "320–650 €/mês (Pro)",
+    esdev: "249–450 €/mês (Pro)",
   },
   {
     servico: "Trabalho avulso à hora",
     freelancer: "20–60 €/h (web) · 40–80 €/h (SEO e correções)",
-    esdev: "50–75 €/h",
+    esdev: "45–65 €/h",
   },
   {
     servico: "Valor/hora de programação freelance",
     freelancer: "30–80 €/h (júnior 25–35, sénior 60–75)",
-    esdev: "mínimo interno 45 €/h",
+    esdev: "piso 40 €/h · alvo 55 €/h",
   },
 ];
 

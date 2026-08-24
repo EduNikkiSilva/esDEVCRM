@@ -18,6 +18,7 @@ import {
   GRUPOS_EXTRAS,
   INPUTS_INICIAIS,
   PACOTES,
+  VALOR_HORA_ALVO,
   VALOR_HORA_INTERNO,
   calcularPreco,
   type CategoriaPacote,
@@ -347,16 +348,24 @@ export function CalculadoraPrecos({
 
             <div
               className={`rounded-md border p-3 ${
-                r.rentabilidadeOk
+                r.nivelRentabilidade === "bom"
                   ? "border-success/30 bg-success/10"
-                  : "border-destructive/30 bg-destructive/10"
+                  : r.nivelRentabilidade === "aceitavel"
+                    ? "border-warning/30 bg-warning/10"
+                    : "border-destructive/30 bg-destructive/10"
               }`}
             >
-              <p className="text-xs text-muted-foreground">Valor/hora efetivo (§29)</p>
+              <p className="text-xs text-muted-foreground">Valor/hora efetivo</p>
               <p className="text-lg font-semibold tabular-nums">{eur2(r.valorHora)}/h</p>
               <p className="mt-0.5 flex items-start gap-1 text-xs text-muted-foreground">
-                {!r.rentabilidadeOk ? <TriangleAlert className="mt-0.5 size-3.5 shrink-0" /> : null}
-                Referência interna {eur(VALOR_HORA_INTERNO)}/h
+                {r.nivelRentabilidade !== "bom" ? (
+                  <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+                ) : null}
+                {r.nivelRentabilidade === "abaixo"
+                  ? `Abaixo do piso de ${eur(VALOR_HORA_INTERNO)}/h — corrigir o orçamento`
+                  : r.nivelRentabilidade === "aceitavel"
+                    ? `Aceitável. Alvo: ${eur(VALOR_HORA_ALVO)}/h`
+                    : `No alvo de ${eur(VALOR_HORA_ALVO)}/h`}
               </p>
             </div>
 

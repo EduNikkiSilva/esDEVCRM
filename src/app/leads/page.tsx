@@ -16,7 +16,7 @@ export default async function LeadsPage({
   searchParams: Promise<{ fase?: string }>;
 }) {
   const { fase: filtro } = await searchParams;
-  const leads = listarLeads();
+  const leads = await listarLeads();
   const colunas = filtro && FASES.includes(filtro as Fase) ? [filtro as Fase] : FASES;
 
   const abertas = leads.filter((l) => FASES_ABERTAS.includes(l.fase as Fase));

@@ -12,14 +12,14 @@ import {
 } from "@/components/ui/table";
 import { PageHeader, Vazio } from "@/components/ui-kit";
 import { data, eur, eur2 } from "@/lib/format";
-import { VALOR_HORA_INTERNO } from "@/lib/pricing";
+import { VALOR_HORA_ALVO, VALOR_HORA_INTERNO } from "@/lib/pricing";
 import { listarProjetos } from "@/lib/queries";
 
 // Lê a base de dados local a cada pedido.
 export const dynamic = "force-dynamic";
 
-export default function ProjetosPage() {
-  const projetos = listarProjetos();
+export default async function ProjetosPage() {
+  const projetos = await listarProjetos();
 
   return (
     <>
@@ -76,7 +76,9 @@ export default function ProjetosPage() {
                             ? "text-muted-foreground/70"
                             : vh < VALOR_HORA_INTERNO
                               ? "text-destructive"
-                              : "text-success"
+                              : vh < VALOR_HORA_ALVO
+                                ? "text-warning"
+                                : "text-success"
                         }`}
                       >
                         {vh === null ? "—" : `${eur2(vh)}/h`}

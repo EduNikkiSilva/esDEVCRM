@@ -5,20 +5,12 @@
  *   node scripts/dados-exemplo.mjs           # insere se estiver vazia
  *   node scripts/dados-exemplo.mjs --forcar  # apaga tudo e volta a inserir
  */
-import fs from "node:fs";
-import path from "node:path";
-import { DatabaseSync } from "node:sqlite";
+import { TABELAS, abrir } from "./lib-bd.mjs";
 
-const raiz = process.cwd();
-const caminho = process.env.ESDEV_DB ?? path.join(raiz, "data", "esdev.db");
-fs.mkdirSync(path.dirname(caminho), { recursive: true });
-
-const db = new DatabaseSync(caminho);
-db.exec("PRAGMA foreign_keys = ON");
-db.exec(fs.readFileSync(path.join(raiz, "db", "schema.sql"), "utf8"));
+const db = await abrir();
 
 const forcar = process.argv.includes("--forcar");
-const existentes = db.prepare("SELECT COUNT(*) AS n FROM leads").get().n;
+const existentes = Number((await db.consulta("SELECT COUNT(*) AS n FROM leads"))[0].n);
 
 if (existentes > 0 && !forcar) {
   console.log(
@@ -28,63 +20,35 @@ if (existentes > 0 && !forcar) {
 }
 
 if (forcar) {
-  for (const t of [
-    "tarefas",
-    "faturas",
-    "manutencoes",
-    "propostas",
-    "analises",
-    "briefings",
-    "projetos",
-    "leads",
-    "clientes",
-  ]) {
-    db.prepare(`DELETE FROM ${t}`).run();
-  }
+  for (const t of TABELAS) await db.executa(`DELETE FROM ${t}`);
 }
 
-const inserirLead = db.prepare(
-  `INSERT INTO leads (empresa, contacto_nome, email, telefone, origem, fase, tipo_solucao,
+const SQL_INSERIR_LEAD = `INSERT INTO leads (empresa, contacto_nome, email, telefone, origem, fase, tipo_solucao,
                       orcamento_indicado, valor_estimado, notas)
-   VALUES (?,?,?,?,?,?,?,?,?,?)`,
-);
+   VALUES (?,?,?,?,?,?,?,?,?,?)`;
 
-const inserirCliente = db.prepare(
-  `INSERT INTO clientes (empresa, nif, contacto_nome, contacto_cargo, email, telefone, website)
-   VALUES (?,?,?,?,?,?,?)`,
-);
+const SQL_INSERIR_CLIENTE = `INSERT INTO clientes (empresa, nif, contacto_nome, contacto_cargo, email, telefone, website)
+   VALUES (?,?,?,?,?,?,?)`;
 
-const inserirProjeto = db.prepare(
-  `INSERT INTO projetos (cliente_id, lead_id, nome, pacote, estado, preco, custos_externos,
+const SQL_INSERIR_PROJETO = `INSERT INTO projetos (cliente_id, lead_id, nome, pacote, estado, preco, custos_externos,
                          horas_estimadas, horas_reais, inicio, entrega_prevista, checklist, notas)
-   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-);
+   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
-const inserirFatura = db.prepare(
-  `INSERT INTO faturas (projeto_id, cliente_id, descricao, tipo, valor, estado, emitida_em, paga_em)
-   VALUES (?,?,?,?,?,?,?,?)`,
-);
+const SQL_INSERIR_FATURA = `INSERT INTO faturas (projeto_id, cliente_id, descricao, tipo, valor, estado, emitida_em, paga_em)
+   VALUES (?,?,?,?,?,?,?,?)`;
 
-const inserirManutencao = db.prepare(
-  `INSERT INTO manutencoes (cliente_id, projeto_id, plano, valor_mensal, estado, inicio, notas)
-   VALUES (?,?,?,?,'Ativo',?,?)`,
-);
+const SQL_INSERIR_MANUTENCAO = `INSERT INTO manutencoes (cliente_id, projeto_id, plano, valor_mensal, estado, inicio, notas)
+   VALUES (?,?,?,?,'Ativo',?,?)`;
 
-const inserirAnalise = db.prepare(
-  `INSERT INTO analises (lead_id, titulo, inputs, preco_minimo, preco_recomendado, preco_premium,
+const SQL_INSERIR_ANALISE = `INSERT INTO analises (lead_id, titulo, inputs, preco_minimo, preco_recomendado, preco_premium,
                          mensalidade, plano_manutencao, horas_estimadas, valor_hora)
-   VALUES (?,?,?,?,?,?,?,?,?,?)`,
-);
+   VALUES (?,?,?,?,?,?,?,?,?,?)`;
 
-const inserirProposta = db.prepare(
-  `INSERT INTO propostas (lead_id, analise_id, nivel, valor, mensalidade, validade_dias, estado,
+const SQL_INSERIR_PROPOSTA = `INSERT INTO propostas (lead_id, analise_id, nivel, valor, mensalidade, validade_dias, estado,
                           ambito, exclusoes, rondas_alteracoes)
-   VALUES (?,?,?,?,?,?,?,?,?,?)`,
-);
+   VALUES (?,?,?,?,?,?,?,?,?,?)`;
 
-const inserirTarefa = db.prepare(
-  "INSERT INTO tarefas (projeto_id, titulo, estado, prazo) VALUES (?,?,?,?)",
-);
+const SQL_INSERIR_TAREFA = "INSERT INTO tarefas (projeto_id, titulo, estado, prazo) VALUES (?,?,?,?)";
 
 const complexidade = (v) => ({
   geral: v,
@@ -98,7 +62,8 @@ const complexidade = (v) => ({
 
 // §26 — PME de remodelações, classificada como Website Business.
 const leadRemodelacoes = Number(
-  inserirLead.run(
+  (await db.executa(
+    SQL_INSERIR_LEAD,
     "Remodelações Silva & Filhos",
     "António Silva",
     "geral@remodelacoessilva.pt",
@@ -106,14 +71,15 @@ const leadRemodelacoes = Number(
     "Recomendação",
     "Projeto ativo",
     "Website institucional",
-    "2.000–5.000 €",
-    3360,
+    "1.000–2.000 €",
+    2520,
     "Homepage, empresa, serviços, projetos, contactos, formulário, WhatsApp, Google Maps, galeria, SEO técnico e mobile.",
-  ).lastInsertRowid,
+  )).lastInsertRowid,
 );
 
 const clienteRemodelacoes = Number(
-  inserirCliente.run(
+  (await db.executa(
+    SQL_INSERIR_CLIENTE,
     "Remodelações Silva & Filhos, Lda.",
     "500000000",
     "António Silva",
@@ -121,12 +87,12 @@ const clienteRemodelacoes = Number(
     "geral@remodelacoessilva.pt",
     "912 000 111",
     "—",
-  ).lastInsertRowid,
+  )).lastInsertRowid,
 );
 
-db.prepare("UPDATE leads SET cliente_id=? WHERE id=?").run(clienteRemodelacoes, leadRemodelacoes);
+await db.executa("UPDATE leads SET cliente_id=? WHERE id=?", clienteRemodelacoes, leadRemodelacoes);
 
-inserirAnalise.run(
+await db.executa(SQL_INSERIR_ANALISE, 
   leadRemodelacoes,
   "Website Business",
   JSON.stringify({
@@ -136,74 +102,76 @@ inserirAnalise.run(
     urgencia: 1,
     risco: 2,
     prioritario: false,
-    horasEstimadas: 56,
+    horasEstimadas: 45,
     custosExternos: 0,
     ajusteComercial: 0,
   }),
-  2440,
-  3360,
-  4410,
-  160,
+  1830,
+  2520,
+  3340,
+  120,
   "business",
+  45,
   56,
-  60,
 );
 
 const projetoRemodelacoes = Number(
-  inserirProjeto.run(
+  (await db.executa(
+    SQL_INSERIR_PROJETO,
     clienteRemodelacoes,
     leadRemodelacoes,
     "Website Remodelações Silva",
     "Website Business",
     "Desenvolvimento",
-    3360,
+    2520,
     0,
-    56,
+    45,
     38,
     "2026-08-04",
     "2026-09-15",
     JSON.stringify(["Formulários testados", "Mobile e desktop testados"]),
     "Cliente fornece textos e fotografias das obras.",
-  ).lastInsertRowid,
+  )).lastInsertRowid,
 );
 
-inserirFatura.run(
+await db.executa(SQL_INSERIR_FATURA, 
   projetoRemodelacoes,
   clienteRemodelacoes,
   "Adjudicação (50%)",
   "Adjudicação",
-  1680,
+  1260,
   "Paga",
   "2026-08-04",
   "2026-08-06",
 );
-inserirFatura.run(
+await db.executa(SQL_INSERIR_FATURA, 
   projetoRemodelacoes,
   clienteRemodelacoes,
   "Antes da entrega (50%)",
   "Entrega final",
-  1680,
+  1260,
   "Pendente",
   null,
   null,
 );
 
-inserirManutencao.run(
+await db.executa(SQL_INSERIR_MANUTENCAO, 
   clienteRemodelacoes,
   projetoRemodelacoes,
   "business",
-  160,
+  120,
   "2026-09-15",
-  "Inclui alojamento e duas horas mensais de alterações.",
+  "Inclui alojamento e 1,5h mensais de alterações.",
 );
 
-inserirTarefa.run(projetoRemodelacoes, "Aprovar design da homepage", "Concluída", "2026-08-12");
-inserirTarefa.run(projetoRemodelacoes, "Integrar galeria de projetos", "Aberta", "2026-08-28");
-inserirTarefa.run(projetoRemodelacoes, "Configurar Search Console", "Aberta", "2026-09-10");
+await db.executa(SQL_INSERIR_TAREFA, projetoRemodelacoes, "Aprovar design da homepage", "Concluída", "2026-08-12");
+await db.executa(SQL_INSERIR_TAREFA, projetoRemodelacoes, "Integrar galeria de projetos", "Aberta", "2026-08-28");
+await db.executa(SQL_INSERIR_TAREFA, projetoRemodelacoes, "Configurar Search Console", "Aberta", "2026-09-10");
 
 // §27 — imobiliária, Website Pro com extras.
 const leadImobiliaria = Number(
-  inserirLead.run(
+  (await db.executa(
+    SQL_INSERIR_LEAD,
     "Imobiliária Costa Verde",
     "Marta Costa",
     "marta@costaverde.pt",
@@ -212,13 +180,14 @@ const leadImobiliaria = Number(
     "Proposta enviada",
     "Website institucional",
     "5.000 €+",
-    9800,
+    7400,
     "10 páginas, catálogo de imóveis, pesquisa, filtros, formulário, WhatsApp, multilingue, CMS, SEO local e integração externa.",
-  ).lastInsertRowid,
+  )).lastInsertRowid,
 );
 
 const analiseImobiliaria = Number(
-  inserirAnalise.run(
+  (await db.executa(
+    SQL_INSERIR_ANALISE,
     leadImobiliaria,
     "Website Pro + sistema de imóveis",
     JSON.stringify({
@@ -235,26 +204,26 @@ const analiseImobiliaria = Number(
       urgencia: 2,
       risco: 3,
       prioritario: false,
-      horasEstimadas: 150,
+      horasEstimadas: 110,
       custosExternos: 0,
       ajusteComercial: 0,
     }),
-    6990,
-    10060,
-    14270,
-    540,
-    "pro",
+    5300,
+    7590,
+    10720,
     150,
-    67.1,
-  ).lastInsertRowid,
+    "business",
+    110,
+    69,
+  )).lastInsertRowid,
 );
 
-inserirProposta.run(
+await db.executa(SQL_INSERIR_PROPOSTA, 
   leadImobiliaria,
   analiseImobiliaria,
   "BUSINESS",
-  9800,
-  540,
+  7400,
+  150,
   30,
   "Enviada",
   "10 páginas, catálogo de imóveis com backoffice, pesquisa e filtros, multilingue PT/EN, CMS, SEO local e integração com portal externo.",
@@ -263,7 +232,7 @@ inserirProposta.run(
 );
 
 // Lead em fase inicial, sem briefing.
-inserirLead.run(
+await db.executa(SQL_INSERIR_LEAD, 
   "Clínica Dentária Nova",
   "Dra. Rita Nunes",
   "geral@clinicanova.pt",
@@ -272,8 +241,9 @@ inserirLead.run(
   "Reunião marcada",
   "Landing page / One-page",
   "500–1.000 €",
-  950,
+  750,
   "Quer captar marcações. Reunião de discovery agendada.",
 );
 
-console.log(`Dados de exemplo inseridos em ${caminho}`);
+console.log(`Dados de exemplo inseridos em ${db.etiqueta}`);
+await db.fechar();

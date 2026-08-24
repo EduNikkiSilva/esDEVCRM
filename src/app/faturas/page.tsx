@@ -20,13 +20,13 @@ import { listarClientes, listarFaturas, listarProjetos } from "@/lib/queries";
 // Lê a base de dados local a cada pedido.
 export const dynamic = "force-dynamic";
 
-export default function FaturasPage() {
-  const faturas = listarFaturas() as (ReturnType<typeof listarFaturas>[number] & {
+export default async function FaturasPage() {
+  const faturas = (await listarFaturas()) as (Awaited<ReturnType<typeof listarFaturas>>[number] & {
     cliente?: string | null;
     projeto?: string | null;
   })[];
-  const clientes = listarClientes();
-  const projetos = listarProjetos();
+  const clientes = await listarClientes();
+  const projetos = await listarProjetos();
   const recebido = faturas.filter((f) => f.estado === "Paga").reduce((s, f) => s + f.valor, 0);
   const pendente = faturas.filter((f) => f.estado === "Pendente").reduce((s, f) => s + f.valor, 0);
 

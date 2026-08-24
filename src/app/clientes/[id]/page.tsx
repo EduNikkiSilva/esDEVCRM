@@ -19,12 +19,12 @@ export const dynamic = "force-dynamic";
 
 export default async function ClientePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const cliente = obterCliente(Number(id));
+  const cliente = await obterCliente(Number(id));
   if (!cliente) notFound();
 
-  const projetos = projetosDoCliente(cliente.id);
-  const faturas = faturasDoCliente(cliente.id);
-  const manutencoes = manutencoesDoCliente(cliente.id);
+  const projetos = await projetosDoCliente(cliente.id);
+  const faturas = await faturasDoCliente(cliente.id);
+  const manutencoes = await manutencoesDoCliente(cliente.id);
   const recebido = faturas.filter((f) => f.estado === "Paga").reduce((s, f) => s + f.valor, 0);
   const emFalta = faturas.filter((f) => f.estado === "Pendente").reduce((s, f) => s + f.valor, 0);
   const mrr = manutencoes.filter((m) => m.estado === "Ativo").reduce((s, m) => s + m.valor_mensal, 0);

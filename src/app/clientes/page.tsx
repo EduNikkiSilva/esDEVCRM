@@ -16,8 +16,8 @@ import { listarClientes } from "@/lib/queries";
 // Lê a base de dados local a cada pedido.
 export const dynamic = "force-dynamic";
 
-export default function ClientesPage() {
-  const clientes = listarClientes();
+export default async function ClientesPage() {
+  const clientes = await listarClientes();
 
   return (
     <>

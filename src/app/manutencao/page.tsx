@@ -12,10 +12,10 @@ import { listarClientes, listarManutencoes, listarProjetos } from "@/lib/queries
 // Lê a base de dados local a cada pedido.
 export const dynamic = "force-dynamic";
 
-export default function ManutencaoPage() {
-  const contratos = listarManutencoes();
-  const clientes = listarClientes();
-  const projetos = listarProjetos();
+export default async function ManutencaoPage() {
+  const contratos = await listarManutencoes();
+  const clientes = await listarClientes();
+  const projetos = await listarProjetos();
   const ativos = contratos.filter((c) => c.estado === "Ativo");
   const mrr = ativos.reduce((s, c) => s + c.valor_mensal, 0);
 

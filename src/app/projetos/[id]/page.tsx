@@ -17,7 +17,7 @@ import {
 } from "@/lib/actions";
 import { ESTADOS_PROJETO, TIPOS_FATURA } from "@/lib/dominio";
 import { data, eur, eur2 } from "@/lib/format";
-import { VALOR_HORA_INTERNO } from "@/lib/pricing";
+import { VALOR_HORA_ALVO, VALOR_HORA_INTERNO } from "@/lib/pricing";
 import { listarFaturas, listarTarefas, obterProjeto } from "@/lib/queries";
 
 // Lê a base de dados local a cada pedido.
@@ -25,11 +25,11 @@ export const dynamic = "force-dynamic";
 
 export default async function ProjetoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const projeto = obterProjeto(Number(id));
+  const projeto = await obterProjeto(Number(id));
   if (!projeto) notFound();
 
-  const faturas = listarFaturas(projeto.id);
-  const tarefas = listarTarefas(projeto.id);
+  const faturas = await listarFaturas(projeto.id);
+  const tarefas = await listarTarefas(projeto.id);
   const recebido = faturas.filter((f) => f.estado === "Paga").reduce((s, f) => s + f.valor, 0);
   const emFalta = faturas.filter((f) => f.estado === "Pendente").reduce((s, f) => s + f.valor, 0);
   const valorHora =
@@ -59,8 +59,16 @@ export default async function ProjetoPage({ params }: { params: Promise<{ id: st
         <Stat
           titulo="€/h efetivo"
           valor={valorHora === null ? "—" : `${eur2(valorHora)}/h`}
-          nota={`${projeto.horas_reais}h reais · referência ${eur(VALOR_HORA_INTERNO)}/h`}
-          tom={valorHora === null ? "neutro" : valorHora < VALOR_HORA_INTERNO ? "alerta" : "bom"}
+          nota={`${projeto.horas_reais}h reais · piso ${eur(VALOR_HORA_INTERNO)}/h · alvo ${eur(VALOR_HORA_ALVO)}/h`}
+          tom={
+            valorHora === null
+              ? "neutro"
+              : valorHora < VALOR_HORA_INTERNO
+                ? "mau"
+                : valorHora < VALOR_HORA_ALVO
+                  ? "alerta"
+                  : "bom"
+          }
         />
       </div>
 
