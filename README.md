@@ -86,6 +86,20 @@ Transversal à app:
    checklist de entrega.
 7. Entregue → o contrato de manutenção passa a contar na receita recorrente.
 
+## Logótipo
+
+A aplicação traz o logótipo esDEV em vetor (`src/components/logotipo.tsx`), usado na barra
+lateral, no ícone da app e na página **Como usar**. Para usar os teus ficheiros originais em
+vez da versão vetorial, basta copiá-los para `public/`:
+
+```
+public/logo.png          → versão para fundos claros (aceita .svg, .png ou .webp)
+public/logo-branco.png   → versão para fundos escuros, usada na barra lateral
+```
+
+Se só tiveres uma versão, coloca-a como `logo.png` — é usada nos dois sítios. A aplicação
+deteta os ficheiros ao arrancar, sem alterar código.
+
 ## Preços — calibração V2 (agosto de 2026)
 
 As tabelas não são as do documento V1: foram recalibradas com preços praticados em Portugal

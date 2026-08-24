@@ -3,30 +3,40 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Command, Database } from "lucide-react";
+import { LogoEsdev } from "@/components/logotipo";
 import { SeletorTema } from "@/components/tema";
+import type { Logotipos } from "@/lib/logo";
 import { NAVEGACAO } from "@/lib/navegacao";
 import { cn } from "@/lib/utils";
 
 export function ConteudoBarraLateral({
   onNavegar,
   abrirPaleta,
+  logos,
 }: {
   onNavegar?: () => void;
   abrirPaleta?: () => void;
+  logos: Logotipos;
 }) {
   const pathname = usePathname();
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex items-center gap-2.5 px-5 py-5">
-        <span className="grid size-9 place-items-center rounded-xl bg-gradient-to-br from-primary to-chart-2 text-sm font-bold text-white shadow-lg shadow-primary/25">
-          es
-        </span>
-        <div className="leading-tight">
-          <p className="text-sm font-semibold text-white">esDEV CRM</p>
-          <p className="text-[11px] text-white/45">Sistema operacional</p>
-        </div>
-      </div>
+      <Link
+        href="/"
+        onClick={onNavegar}
+        className="block px-5 py-5 transition-opacity hover:opacity-80"
+      >
+        {logos.escuro ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logos.escuro} alt="esDEV" className="h-7 w-auto" />
+        ) : (
+          <LogoEsdev className="h-7 text-white" />
+        )}
+        <p className="mt-1.5 text-[11px] tracking-[0.14em] text-white/40 uppercase">
+          Sistema operacional
+        </p>
+      </Link>
 
       {abrirPaleta ? (
         <button

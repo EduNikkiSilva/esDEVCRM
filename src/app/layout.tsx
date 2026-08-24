@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Estrutura } from "@/components/estrutura";
 import { ProvedorTema } from "@/components/tema";
 import { Toaster } from "@/components/ui/sonner";
+import { logotipos } from "@/lib/logo";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -31,7 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full">
         <ProvedorTema>
-          <Estrutura>{children}</Estrutura>
+          <Estrutura logos={logotipos()}>{children}</Estrutura>
           <Toaster position="bottom-right" />
         </ProvedorTema>
       </body>

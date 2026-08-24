@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  CircleQuestionMark,
   Calculator,
   FileText,
   FolderKanban,
@@ -92,6 +93,12 @@ export const NAVEGACAO: GrupoNav[] = [
         icon: BookOpen,
         descricao: "Tabelas de preços, mercado e checklists",
       },
+      {
+        href: "/ajuda",
+        label: "Como usar",
+        icon: CircleQuestionMark,
+        descricao: "O fluxo de trabalho e as rotinas do sistema",
+      },
     ],
   },
 ];
@@ -109,6 +116,7 @@ const TITULOS: Record<string, string> = {
   "/faturas": "Faturação",
   "/manutencao": "Manutenção",
   "/referencias": "Referências",
+  "/ajuda": "Como usar",
 };
 
 export function tituloDaRota(pathname: string) {

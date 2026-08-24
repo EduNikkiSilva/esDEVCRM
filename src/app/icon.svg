@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="esDEV">
+  <defs>
+    <linearGradient id="fundo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0d1b3e" />
+      <stop offset="100%" stop-color="#050a18" />
+    </linearGradient>
+    <linearGradient id="azul" x1="0" y1="0" x2="1" y2="0.4">
+      <stop offset="0%" stop-color="#0b57ff" />
+      <stop offset="50%" stop-color="#2b9bff" />
+      <stop offset="100%" stop-color="#0b57ff" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#fundo)" />
+  <text
+    x="256"
+    y="336"
+    text-anchor="middle"
+    font-family="'Arial Black', Impact, Helvetica, sans-serif"
+    font-size="248"
+    font-weight="900"
+    letter-spacing="-14"
+    fill="url(#azul)"
+  >es</text>
+</svg>

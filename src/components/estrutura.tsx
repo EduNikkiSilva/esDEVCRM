@@ -8,9 +8,16 @@ import { ConteudoBarraLateral } from "@/components/barra-lateral";
 import { PaletaComandos } from "@/components/paleta-comandos";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import type { Logotipos } from "@/lib/logo";
 import { tituloDaRota } from "@/lib/navegacao";
 
-export function Estrutura({ children }: { children: React.ReactNode }) {
+export function Estrutura({
+  children,
+  logos,
+}: {
+  children: React.ReactNode;
+  logos: Logotipos;
+}) {
   const [paleta, setPaleta] = useState(false);
   const [menu, setMenu] = useState(false);
   const pathname = usePathname();
@@ -18,7 +25,7 @@ export function Estrutura({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-white/5 lg:block">
-        <ConteudoBarraLateral abrirPaleta={() => setPaleta(true)} />
+        <ConteudoBarraLateral logos={logos} abrirPaleta={() => setPaleta(true)} />
       </aside>
 
       <div className="lg:pl-64">
@@ -34,7 +41,7 @@ export function Estrutura({ children }: { children: React.ReactNode }) {
               />
               <SheetContent side="left" className="w-72 border-r-0 p-0">
                 <SheetTitle className="sr-only">Navegação</SheetTitle>
-                <ConteudoBarraLateral onNavegar={() => setMenu(false)} />
+                <ConteudoBarraLateral logos={logos} onNavegar={() => setMenu(false)} />
               </SheetContent>
             </Sheet>
 
