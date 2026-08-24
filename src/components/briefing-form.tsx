@@ -60,7 +60,7 @@ export function BriefingForm({
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <Progress value={(preenchidos / totalCampos) * 100} className="h-2" />
-        <span className="shrink-0 text-xs text-slate-500 tabular-nums">
+        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
           {preenchidos}/{totalCampos} campos
         </span>
         <Button size="sm" onClick={guardar} disabled={pendente}>
@@ -111,7 +111,7 @@ function CampoDinamico({
 
   return (
     <div className={largo ? "sm:col-span-2" : undefined}>
-      <Label className="text-xs font-medium text-slate-600">{campo.label}</Label>
+      <Label className="text-xs font-medium text-muted-foreground">{campo.label}</Label>
       <div className="mt-1.5">
         {campo.tipo === "area" ? (
           <Textarea
@@ -129,7 +129,7 @@ function CampoDinamico({
           <select
             value={(valor as string) ?? ""}
             onChange={(e) => definir(campo.id, e.target.value)}
-            className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm shadow-xs outline-none focus-visible:border-slate-400"
+            className="h-9 w-full rounded-md border border-border bg-card px-3 text-sm shadow-xs outline-none focus-visible:border-ring"
           >
             <option value="">—</option>
             {campo.opcoes?.map((o) => (
@@ -149,8 +149,8 @@ function CampoDinamico({
                   onClick={() => alternarMulti(campo.id, o)}
                   className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
                     ativo
-                      ? "border-slate-900 bg-slate-900 text-white"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-400"
+                      ? "border-primary bg-primary text-white"
+                      : "border-border bg-card text-muted-foreground hover:border-ring"
                   }`}
                 >
                   {o}

@@ -38,13 +38,13 @@ export default function ManutencaoPage() {
             <CardHeader>
               <CardTitle className="flex items-baseline justify-between text-base">
                 {p.nome}
-                <span className="text-sm font-normal text-slate-500 tabular-nums">
+                <span className="text-sm font-normal text-muted-foreground tabular-nums">
                   {eur(p.minimo)}–{eur(p.maximo)}/mês
                 </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-slate-600">{p.inclui}</p>
+              <p className="text-sm text-muted-foreground">{p.inclui}</p>
             </CardContent>
           </Card>
         ))}
@@ -61,7 +61,7 @@ export default function ManutencaoPage() {
                 Ao converter uma lead em projeto pode criar o contrato automaticamente.
               </Vazio>
             ) : (
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-border/60">
                 {contratos.map((c) => (
                   <li key={c.id} className="flex flex-wrap items-center gap-3 py-3">
                     <div className="min-w-0">
@@ -74,7 +74,7 @@ export default function ManutencaoPage() {
                           (c.cliente ?? "Sem cliente")
                         )}
                       </p>
-                      <p className="truncate text-xs text-slate-500">
+                      <p className="truncate text-xs text-muted-foreground">
                         {c.projeto ?? "Sem projeto"} · desde {data(c.inicio)}
                       </p>
                     </div>
@@ -95,7 +95,7 @@ export default function ManutencaoPage() {
                       <select
                         name="estado"
                         defaultValue={c.estado}
-                        className="h-8 rounded-md border border-slate-200 px-2 text-xs"
+                        className="h-8 rounded-md border border-border px-2 text-xs"
                       >
                         {["Ativo", "Suspenso", "Cancelado"].map((e) => (
                           <option key={e} value={e}>
@@ -109,7 +109,7 @@ export default function ManutencaoPage() {
                     </form>
                     <form action={apagarManutencao}>
                       <input type="hidden" name="id" value={c.id} />
-                      <Button type="submit" size="icon" variant="ghost" className="text-rose-600">
+                      <Button type="submit" size="icon" variant="ghost" className="text-destructive">
                         <Trash2 className="size-4" />
                       </Button>
                     </form>

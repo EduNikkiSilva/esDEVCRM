@@ -52,10 +52,10 @@ export default function ClientesPage() {
                           {c.empresa}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-slate-500">{c.nif ?? "—"}</TableCell>
-                      <TableCell className="text-slate-500">{c.contacto_nome ?? "—"}</TableCell>
-                      <TableCell className="text-slate-500">{c.email ?? "—"}</TableCell>
-                      <TableCell className="text-slate-500">{c.telefone ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.nif ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.contacto_nome ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.email ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.telefone ?? "—"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

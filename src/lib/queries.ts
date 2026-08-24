@@ -228,6 +228,38 @@ export function indicadores() {
   };
 }
 
+/** Faturação dos últimos 6 meses, separada entre recebido e pendente. */
+export function faturacaoMensal() {
+  const linhas = consulta<{ mes: string; estado: string; total: number }>(
+    `SELECT strftime('%Y-%m', COALESCE(paga_em, emitida_em, criado_em)) AS mes,
+            estado, SUM(valor) AS total
+     FROM faturas
+     WHERE estado <> 'Anulada'
+     GROUP BY mes, estado`,
+  );
+
+  const meses: { mes: string; etiqueta: string; recebido: number; pendente: number }[] = [];
+  const agora = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
+    const mes = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    meses.push({
+      mes,
+      etiqueta: d.toLocaleDateString("pt-PT", { month: "short" }).replace(".", ""),
+      recebido: 0,
+      pendente: 0,
+    });
+  }
+
+  for (const l of linhas) {
+    const alvo = meses.find((m) => m.mes === l.mes);
+    if (!alvo) continue;
+    if (l.estado === "Paga") alvo.recebido += l.total;
+    else alvo.pendente += l.total;
+  }
+  return meses;
+}
+
 export function contagemPorFase() {
   const linhas = consulta<{ fase: string; n: number; total: number }>(
     "SELECT fase, COUNT(*) AS n, COALESCE(SUM(valor_estimado),0) AS total FROM leads GROUP BY fase",

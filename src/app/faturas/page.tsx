@@ -70,22 +70,22 @@ export default function FaturasPage() {
                         {f.projeto ? (
                           <Link
                             href={`/projetos/${f.projeto_id}`}
-                            className="block text-xs text-slate-500 hover:underline"
+                            className="block text-xs text-muted-foreground hover:underline"
                           >
                             {f.projeto}
                           </Link>
                         ) : null}
                       </TableCell>
-                      <TableCell className="text-slate-500">{f.cliente ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{f.cliente ?? "—"}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{f.tipo}</Badge>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{eur(f.valor)}</TableCell>
                       <TableCell>
-                        <span className={f.estado === "Paga" ? "text-emerald-600" : "text-amber-600"}>
+                        <span className={f.estado === "Paga" ? "text-success" : "text-warning"}>
                           {f.estado}
                         </span>
-                        <span className="block text-xs text-slate-400">
+                        <span className="block text-xs text-muted-foreground/70">
                           {f.estado === "Paga" ? data(f.paga_em) : data(f.emitida_em)}
                         </span>
                       </TableCell>
@@ -103,7 +103,7 @@ export default function FaturasPage() {
                           </form>
                           <form action={apagarFatura}>
                             <input type="hidden" name="id" value={f.id} />
-                            <Button type="submit" size="icon" variant="ghost" className="text-rose-600">
+                            <Button type="submit" size="icon" variant="ghost" className="text-destructive">
                               <Trash2 className="size-4" />
                             </Button>
                           </form>

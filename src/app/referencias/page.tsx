@@ -77,7 +77,7 @@ export default function ReferenciasPage() {
             <CardTitle className="text-base">
               Mercado português vs. esDEV — {MERCADO_ATUALIZADO_EM}
             </CardTitle>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Faixas recolhidas em publicações portuguesas de preços. O posicionamento da esDEV é o
               do §2: acima do freelancer de entrada, abaixo da agência.
             </p>
@@ -96,33 +96,33 @@ export default function ReferenciasPage() {
                 {FAIXAS_MERCADO.map((f) => (
                   <TableRow key={f.servico}>
                     <TableCell className="font-medium">{f.servico}</TableCell>
-                    <TableCell className="text-slate-500">{f.freelancer ?? "—"}</TableCell>
-                    <TableCell className="text-slate-500">{f.agencia ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{f.freelancer ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{f.agencia ?? "—"}</TableCell>
                     <TableCell className="font-semibold">{f.esdev}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
             <div className="px-6 pt-4">
-              <p className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                 Fontes
               </p>
-              <ul className="space-y-1.5 text-xs text-slate-600">
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
                 {FONTES_MERCADO.map((f) => (
                   <li key={f.url}>
                     <a
                       href={f.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-medium underline decoration-slate-300 underline-offset-2 hover:decoration-slate-900"
+                      className="font-medium underline decoration-border underline-offset-2 hover:decoration-foreground"
                     >
                       {f.titulo}
                     </a>
-                    <span className="text-slate-500"> — {f.nota}</span>
+                    <span className="text-muted-foreground"> — {f.nota}</span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-slate-500">
+              <p className="mt-3 text-xs text-muted-foreground">
                 Rever anualmente, ou assim que houver 10 projetos fechados com horas reais medidas:
                 dados próprios valem mais do que qualquer artigo.
               </p>
@@ -149,9 +149,9 @@ export default function ReferenciasPage() {
                 {PACOTES.map((p) => (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium">{p.nome}</TableCell>
-                    <TableCell className="text-slate-500">
+                    <TableCell className="text-muted-foreground">
                       {p.categoria}
-                      <span className="block text-xs text-slate-400">{p.mercado}</span>
+                      <span className="block text-xs text-muted-foreground/70">{p.mercado}</span>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">{eur(p.minimo)}</TableCell>
                     <TableCell className="text-right font-semibold tabular-nums">
@@ -162,7 +162,7 @@ export default function ReferenciasPage() {
                 ))}
               </TableBody>
             </Table>
-            <p className="px-6 pt-4 text-xs text-slate-500">
+            <p className="px-6 pt-4 text-xs text-muted-foreground">
               O Website Business é o produto principal para PMEs. Valor/hora interno mínimo:{" "}
               {eur(VALOR_HORA_INTERNO)}/h — serve para validar rentabilidade, não para apresentar ao
               cliente. Trabalho avulso fora do âmbito: {eur(TARIFA_HORA_ADICIONAL.minimo)}–
@@ -188,7 +188,7 @@ export default function ReferenciasPage() {
                 {EXTRAS.map((e) => (
                   <TableRow key={e.id}>
                     <TableCell className="font-medium">{e.nome}</TableCell>
-                    <TableCell className="text-slate-500">{e.grupo}</TableCell>
+                    <TableCell className="text-muted-foreground">{e.grupo}</TableCell>
                     <TableCell className="text-right tabular-nums">
                       {e.minimo === e.premium ? eur(e.recomendado) : `${eur(e.minimo)} – ${eur(e.premium)}`}
                     </TableCell>
@@ -196,17 +196,17 @@ export default function ReferenciasPage() {
                 ))}
                 <TableRow>
                   <TableCell className="font-medium">Desenvolvimento prioritário</TableCell>
-                  <TableCell className="text-slate-500">Fator</TableCell>
+                  <TableCell className="text-muted-foreground">Fator</TableCell>
                   <TableCell className="text-right">+10%</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell className="font-medium">Urgência</TableCell>
-                  <TableCell className="text-slate-500">Fator</TableCell>
+                  <TableCell className="text-muted-foreground">Fator</TableCell>
                   <TableCell className="text-right">+20% a +30%</TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell className="font-medium">Trabalho avulso à hora</TableCell>
-                  <TableCell className="text-slate-500">Fora do âmbito</TableCell>
+                  <TableCell className="text-muted-foreground">Fora do âmbito</TableCell>
                   <TableCell className="text-right tabular-nums">
                     {eur(TARIFA_HORA_ADICIONAL.minimo)}–{eur(TARIFA_HORA_ADICIONAL.maximo)}/h
                   </TableCell>
@@ -226,15 +226,15 @@ export default function ReferenciasPage() {
                 <div key={p.id}>
                   <p className="text-sm font-semibold">
                     {p.nome}{" "}
-                    <span className="font-normal text-slate-500 tabular-nums">
+                    <span className="font-normal text-muted-foreground tabular-nums">
                       {eur(p.minimo)}–{eur(p.maximo)}/mês
                     </span>
                   </p>
-                  <p className="text-sm text-slate-600">{p.inclui}</p>
-                  <p className="text-xs text-slate-400">Mercado: {p.mercado}</p>
+                  <p className="text-sm text-muted-foreground">{p.inclui}</p>
+                  <p className="text-xs text-muted-foreground/70">Mercado: {p.mercado}</p>
                 </div>
               ))}
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Desenvolvimento adicional: {eur(TARIFA_HORA_ADICIONAL.minimo)}–
                 {eur(TARIFA_HORA_ADICIONAL.maximo)}/h.
               </p>
@@ -249,10 +249,10 @@ export default function ReferenciasPage() {
               {PLANOS_PAGAMENTO.map((p) => (
                 <div key={p.id}>
                   <p className="text-sm font-semibold">{p.nome}</p>
-                  <p className="text-sm text-slate-600">{p.descricao}</p>
+                  <p className="text-sm text-muted-foreground">{p.descricao}</p>
                 </div>
               ))}
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 O preço inclui até duas rondas de alterações sobre o âmbito aprovado; fora do âmbito
                 é orçamentado à parte (§13).
               </p>
@@ -274,7 +274,7 @@ export default function ReferenciasPage() {
                 </li>
               ))}
             </ol>
-            <p className="mt-4 text-xs text-slate-500">
+            <p className="mt-4 text-xs text-muted-foreground">
               Pipeline no CRM: {FASES.filter((f) => f !== "Perdido").join(" → ")}.
             </p>
           </CardContent>
@@ -286,10 +286,10 @@ export default function ReferenciasPage() {
               <CardTitle className="text-base">Regras de ouro (§25)</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm text-slate-600">
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 {REGRAS_DE_OURO.map((r) => (
                   <li key={r} className="flex gap-2">
-                    <span className="text-slate-300">•</span>
+                    <span className="text-muted-foreground/40">•</span>
                     <span>{r}</span>
                   </li>
                 ))}
@@ -302,10 +302,10 @@ export default function ReferenciasPage() {
               <CardTitle className="text-base">Checklist de entrega (§17)</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm text-slate-600">
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 {CHECKLIST_ENTREGA.map((c) => (
                   <li key={c} className="flex gap-2">
-                    <span className="text-slate-300">•</span>
+                    <span className="text-muted-foreground/40">•</span>
                     <span>{c}</span>
                   </li>
                 ))}
@@ -318,15 +318,15 @@ export default function ReferenciasPage() {
               <CardTitle className="text-base">Cláusulas do contrato (§12)</CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm text-slate-600">
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 {CONTRATO.map((c) => (
                   <li key={c} className="flex gap-2">
-                    <span className="text-slate-300">•</span>
+                    <span className="text-muted-foreground/40">•</span>
                     <span>{c}</span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-xs text-slate-500">
+              <p className="mt-3 text-xs text-muted-foreground">
                 O modelo de contrato deve ser revisto por advogado ou solicitador antes de ser usado
                 como definitivo.
               </p>

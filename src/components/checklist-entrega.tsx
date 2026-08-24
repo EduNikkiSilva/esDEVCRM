@@ -34,7 +34,7 @@ export function ChecklistEntrega({
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         <Progress value={(itens.length / CHECKLIST_ENTREGA.length) * 100} className="h-2" />
-        <span className="shrink-0 text-xs text-slate-500 tabular-nums">
+        <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
           {itens.length}/{CHECKLIST_ENTREGA.length}
         </span>
       </div>
@@ -46,9 +46,9 @@ export function ChecklistEntrega({
                 type="checkbox"
                 checked={itens.includes(item)}
                 onChange={() => alternar(item)}
-                className="size-4 accent-slate-900"
+                className="size-4 accent-primary"
               />
-              <span className={itens.includes(item) ? "text-slate-400 line-through" : ""}>
+              <span className={itens.includes(item) ? "text-muted-foreground/70 line-through" : ""}>
                 {item}
               </span>
             </label>

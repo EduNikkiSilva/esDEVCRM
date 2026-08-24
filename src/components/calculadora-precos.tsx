@@ -78,7 +78,7 @@ export function CalculadoraPrecos({
           <CardContent className="space-y-4">
             {CATEGORIAS.map((categoria) => (
               <div key={categoria}>
-                <p className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                   {categoria}
                 </p>
                 <div className="grid gap-2 sm:grid-cols-2">
@@ -91,13 +91,13 @@ export function CalculadoraPrecos({
                         onClick={() => atualizar({ pacoteId: p.id })}
                         className={`rounded-lg border p-3 text-left transition-colors ${
                           ativo
-                            ? "border-slate-900 bg-slate-900 text-white"
-                            : "border-slate-200 bg-white hover:border-slate-400"
+                            ? "border-primary bg-primary text-white"
+                            : "border-border bg-card hover:border-ring"
                         }`}
                       >
                         <p className="text-sm font-semibold">{p.nome}</p>
                         <p
-                          className={`mt-0.5 text-xs ${ativo ? "text-slate-300" : "text-slate-500"}`}
+                          className={`mt-0.5 text-xs ${ativo ? "text-muted-foreground/40" : "text-muted-foreground"}`}
                         >
                           {p.descricao}
                         </p>
@@ -105,7 +105,7 @@ export function CalculadoraPrecos({
                           {eur(p.minimo)} · {eur(p.recomendado)} · {eur(p.premium)}
                         </p>
                         <p
-                          className={`mt-0.5 text-[11px] ${ativo ? "text-slate-400" : "text-slate-400"}`}
+                          className={`mt-0.5 text-[11px] ${ativo ? "text-muted-foreground/70" : "text-muted-foreground/70"}`}
                         >
                           Mercado: {p.mercado}
                         </p>
@@ -125,17 +125,17 @@ export function CalculadoraPrecos({
           <CardContent className="space-y-5">
             {GRUPOS_EXTRAS.map((grupo) => (
               <div key={grupo}>
-                <p className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                   {grupo}
                 </p>
-                <ul className="divide-y divide-slate-100">
+                <ul className="divide-y divide-border/60">
                   {EXTRAS.filter((e) => e.grupo === grupo).map((e) => {
                     const q = inputs.extras[e.id] ?? 0;
                     return (
                       <li key={e.id} className="flex items-center justify-between gap-3 py-2">
                         <div className="min-w-0">
                           <p className="truncate text-sm">{e.nome}</p>
-                          <p className="text-xs text-slate-500 tabular-nums">
+                          <p className="text-xs text-muted-foreground tabular-nums">
                             {e.minimo === e.premium
                               ? eur(e.recomendado)
                               : `${eur(e.minimo)} – ${eur(e.premium)}`}
@@ -155,7 +155,7 @@ export function CalculadoraPrecos({
                           </Button>
                           <span
                             className={`w-6 text-center text-sm tabular-nums ${
-                              q ? "font-semibold" : "text-slate-400"
+                              q ? "font-semibold" : "text-muted-foreground/70"
                             }`}
                           >
                             {q}
@@ -188,7 +188,7 @@ export function CalculadoraPrecos({
             {EIXOS_COMPLEXIDADE.map((eixo) => (
               <div key={eixo.id} className="grid grid-cols-[1fr_auto] items-center gap-3">
                 <div>
-                  <Label className="text-sm font-normal text-slate-700">{eixo.nome}</Label>
+                  <Label className="text-sm font-normal text-foreground/80">{eixo.nome}</Label>
                   <input
                     type="range"
                     min={1}
@@ -196,7 +196,7 @@ export function CalculadoraPrecos({
                     step={1}
                     value={inputs.complexidade[eixo.id]}
                     onChange={(ev) => mudarComplexidade(eixo.id, Number(ev.target.value))}
-                    className="mt-1 w-full accent-slate-900"
+                    className="mt-1 w-full accent-primary"
                   />
                 </div>
                 <span className="w-6 text-center text-sm font-semibold tabular-nums">
@@ -209,7 +209,7 @@ export function CalculadoraPrecos({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <Label className="text-sm font-normal text-slate-700">
+                <Label className="text-sm font-normal text-foreground/80">
                   Urgência — acresce {pct(r.acrescimoUrgencia)}
                 </Label>
                 <input
@@ -219,11 +219,11 @@ export function CalculadoraPrecos({
                   step={1}
                   value={inputs.urgencia}
                   onChange={(e) => atualizar({ urgencia: Number(e.target.value) })}
-                  className="mt-1 w-full accent-slate-900"
+                  className="mt-1 w-full accent-primary"
                 />
               </div>
               <div>
-                <Label className="text-sm font-normal text-slate-700">
+                <Label className="text-sm font-normal text-foreground/80">
                   Risco — margem de {pct(r.margemRisco)}
                 </Label>
                 <input
@@ -233,7 +233,7 @@ export function CalculadoraPrecos({
                   step={1}
                   value={inputs.risco}
                   onChange={(e) => atualizar({ risco: Number(e.target.value) })}
-                  className="mt-1 w-full accent-slate-900"
+                  className="mt-1 w-full accent-primary"
                 />
               </div>
             </div>
@@ -243,7 +243,7 @@ export function CalculadoraPrecos({
                 type="checkbox"
                 checked={inputs.prioritario}
                 onChange={(e) => atualizar({ prioritario: e.target.checked })}
-                className="size-4 accent-slate-900"
+                className="size-4 accent-primary"
               />
               Desenvolvimento prioritário (+10%)
             </label>
@@ -252,7 +252,7 @@ export function CalculadoraPrecos({
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="grid gap-1.5">
-                <Label htmlFor="horas" className="text-xs text-slate-600">
+                <Label htmlFor="horas" className="text-xs text-muted-foreground">
                   Horas estimadas
                 </Label>
                 <Input
@@ -265,7 +265,7 @@ export function CalculadoraPrecos({
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label htmlFor="custos" className="text-xs text-slate-600">
+                <Label htmlFor="custos" className="text-xs text-muted-foreground">
                   Custos externos (€)
                 </Label>
                 <Input
@@ -278,7 +278,7 @@ export function CalculadoraPrecos({
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label htmlFor="ajuste" className="text-xs text-slate-600">
+                <Label htmlFor="ajuste" className="text-xs text-muted-foreground">
                   Ajuste comercial (%)
                 </Label>
                 <Input
@@ -314,12 +314,12 @@ export function CalculadoraPrecos({
                 <div
                   key={l.rotulo}
                   className={`flex items-baseline justify-between rounded-md px-3 py-2 ${
-                    l.destaque ? "bg-slate-900 text-white" : "bg-slate-100"
+                    l.destaque ? "bg-primary text-white" : "bg-secondary"
                   }`}
                 >
                   <span className="text-xs">
                     {l.rotulo}
-                    <span className={l.destaque ? "text-slate-400" : "text-slate-500"}>
+                    <span className={l.destaque ? "text-muted-foreground/70" : "text-muted-foreground"}>
                       {" "}
                       · {l.nota}
                     </span>
@@ -333,10 +333,10 @@ export function CalculadoraPrecos({
               ))}
             </div>
 
-            <div className="rounded-md border border-slate-200 p-3">
-              <p className="text-xs text-slate-500">Mensalidade recomendada</p>
+            <div className="rounded-md border border-border p-3">
+              <p className="text-xs text-muted-foreground">Mensalidade recomendada</p>
               <p className="text-lg font-semibold tabular-nums">{eur(r.manutencao.valor)}/mês</p>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {r.manutencao.nome} · faixa {eur(r.manutencao.minimo)}–{eur(r.manutencao.maximo)}
               </p>
             </div>
@@ -344,13 +344,13 @@ export function CalculadoraPrecos({
             <div
               className={`rounded-md border p-3 ${
                 r.rentabilidadeOk
-                  ? "border-emerald-200 bg-emerald-50"
-                  : "border-rose-200 bg-rose-50"
+                  ? "border-success/30 bg-success/10"
+                  : "border-destructive/30 bg-destructive/10"
               }`}
             >
-              <p className="text-xs text-slate-600">Valor/hora efetivo (§29)</p>
+              <p className="text-xs text-muted-foreground">Valor/hora efetivo (§29)</p>
               <p className="text-lg font-semibold tabular-nums">{eur2(r.valorHora)}/h</p>
-              <p className="mt-0.5 flex items-start gap-1 text-xs text-slate-600">
+              <p className="mt-0.5 flex items-start gap-1 text-xs text-muted-foreground">
                 {!r.rentabilidadeOk ? <TriangleAlert className="mt-0.5 size-3.5 shrink-0" /> : null}
                 Referência interna {eur(VALOR_HORA_INTERNO)}/h
               </p>
@@ -397,7 +397,7 @@ export function CalculadoraPrecos({
 function Linha({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
     <div className="flex justify-between gap-2">
-      <dt className="text-slate-500">{rotulo}</dt>
+      <dt className="text-muted-foreground">{rotulo}</dt>
       <dd className="font-medium tabular-nums">{valor}</dd>
     </div>
   );

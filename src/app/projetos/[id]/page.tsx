@@ -116,7 +116,7 @@ export default async function ProjetoPage({ params }: { params: Promise<{ id: st
                 </div>
               </form>
 
-              <form action={registarHoras} className="mt-4 flex items-end gap-2 border-t border-slate-100 pt-4">
+              <form action={registarHoras} className="mt-4 flex items-end gap-2 border-t border-border/60 pt-4">
                 <input type="hidden" name="id" value={projeto.id} />
                 <Campo nome="horas" label="Registar horas trabalhadas" tipo="number" step="0.5" valor={0} className="w-48" />
                 <Button type="submit" variant="outline">
@@ -131,16 +131,16 @@ export default async function ProjetoPage({ params }: { params: Promise<{ id: st
               <CardTitle className="text-base">Faturação do projeto</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-border/60">
                 {faturas.length === 0 ? (
-                  <li className="py-2 text-sm text-slate-500">Sem faturas.</li>
+                  <li className="py-2 text-sm text-muted-foreground">Sem faturas.</li>
                 ) : (
                   faturas.map((f) => (
                     <li key={f.id} className="flex flex-wrap items-center gap-3 py-2.5 text-sm">
                       <span className="font-medium">{f.descricao}</span>
                       <Badge variant="outline">{f.tipo}</Badge>
                       <span className="tabular-nums">{eur(f.valor)}</span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         {f.estado === "Paga" ? `paga ${data(f.paga_em)}` : "pendente"}
                       </span>
                       <span className="ml-auto flex gap-1">
@@ -157,7 +157,7 @@ export default async function ProjetoPage({ params }: { params: Promise<{ id: st
                         </form>
                         <form action={apagarFatura}>
                           <input type="hidden" name="id" value={f.id} />
-                          <Button type="submit" size="icon" variant="ghost" className="text-rose-600">
+                          <Button type="submit" size="icon" variant="ghost" className="text-destructive">
                             <Trash2 className="size-4" />
                           </Button>
                         </form>
@@ -167,7 +167,7 @@ export default async function ProjetoPage({ params }: { params: Promise<{ id: st
                 )}
               </ul>
 
-              <form action={criarFatura} className="grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-4">
+              <form action={criarFatura} className="grid gap-3 border-t border-border/60 pt-4 sm:grid-cols-4">
                 <input type="hidden" name="projeto_id" value={projeto.id} />
                 <Campo nome="descricao" label="Descrição" placeholder="Trabalho adicional" />
                 <CampoSelect nome="tipo" label="Tipo" opcoes={TIPOS_FATURA} />
@@ -198,7 +198,7 @@ export default async function ProjetoPage({ params }: { params: Promise<{ id: st
             </CardHeader>
             <CardContent className="space-y-3">
               {tarefas.length === 0 ? (
-                <p className="text-sm text-slate-500">Sem tarefas.</p>
+                <p className="text-sm text-muted-foreground">Sem tarefas.</p>
               ) : (
                 <ul className="space-y-1.5">
                   {tarefas.map((t) => (
@@ -209,26 +209,26 @@ export default async function ProjetoPage({ params }: { params: Promise<{ id: st
                         <Button type="submit" size="icon" variant="ghost" className="size-6">
                           <Check
                             className={`size-4 ${
-                              t.estado === "Concluída" ? "text-emerald-600" : "text-slate-300"
+                              t.estado === "Concluída" ? "text-success" : "text-muted-foreground/40"
                             }`}
                           />
                         </Button>
                         <span
                           className={`text-sm ${
-                            t.estado === "Concluída" ? "text-slate-400 line-through" : ""
+                            t.estado === "Concluída" ? "text-muted-foreground/70 line-through" : ""
                           }`}
                         >
                           {t.titulo}
                         </span>
                         {t.prazo ? (
-                          <span className="ml-auto text-xs text-slate-400">{data(t.prazo)}</span>
+                          <span className="ml-auto text-xs text-muted-foreground/70">{data(t.prazo)}</span>
                         ) : null}
                       </form>
                     </li>
                   ))}
                 </ul>
               )}
-              <form action={criarTarefa} className="grid gap-2 border-t border-slate-100 pt-3">
+              <form action={criarTarefa} className="grid gap-2 border-t border-border/60 pt-3">
                 <input type="hidden" name="projeto_id" value={projeto.id} />
                 <Campo nome="titulo" label="Nova tarefa" placeholder="Aprovar design da homepage" />
                 <Campo nome="prazo" label="Prazo" tipo="date" />

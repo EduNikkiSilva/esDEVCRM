@@ -62,26 +62,26 @@ export default function ProjetosPage() {
                           {p.nome}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-slate-500">{p.cliente ?? "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.cliente ?? "—"}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{p.estado}</Badge>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{eur(p.preco)}</TableCell>
-                      <TableCell className="text-right tabular-nums text-slate-500">
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
                         {p.horas_estimadas} / {p.horas_reais}
                       </TableCell>
                       <TableCell
                         className={`text-right tabular-nums ${
                           vh === null
-                            ? "text-slate-400"
+                            ? "text-muted-foreground/70"
                             : vh < VALOR_HORA_INTERNO
-                              ? "text-rose-600"
-                              : "text-emerald-600"
+                              ? "text-destructive"
+                              : "text-success"
                         }`}
                       >
                         {vh === null ? "—" : `${eur2(vh)}/h`}
                       </TableCell>
-                      <TableCell className="text-slate-500">{data(p.entrega_prevista)}</TableCell>
+                      <TableCell className="text-muted-foreground">{data(p.entrega_prevista)}</TableCell>
                     </TableRow>
                   );
                 })}

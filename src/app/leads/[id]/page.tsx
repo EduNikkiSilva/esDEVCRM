@@ -120,7 +120,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
               <Separator className="my-6" />
               <form action={apagarLead}>
                 <input type="hidden" name="id" value={lead.id} />
-                <Button type="submit" variant="ghost" size="sm" className="text-rose-600">
+                <Button type="submit" variant="ghost" size="sm" className="text-destructive">
                   <Trash2 className="size-4" /> Apagar lead
                 </Button>
               </form>
@@ -142,16 +142,16 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                 <CardTitle className="text-base">Análises guardadas</CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="divide-y divide-slate-100 text-sm">
+                <ul className="divide-y divide-border/60 text-sm">
                   {analises.map((a) => (
                     <li key={a.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2">
                       <span className="font-medium">{a.titulo}</span>
-                      <span className="text-slate-500">{data(a.criado_em)}</span>
+                      <span className="text-muted-foreground">{data(a.criado_em)}</span>
                       <span className="tabular-nums">
                         {eur(a.preco_minimo)} · <strong>{eur(a.preco_recomendado)}</strong> ·{" "}
                         {eur(a.preco_premium)}
                       </span>
-                      <span className="text-slate-500 tabular-nums">
+                      <span className="text-muted-foreground tabular-nums">
                         {eur(a.mensalidade)}/mês · {eur2(a.valor_hora ?? 0)}/h
                       </span>
                     </li>
@@ -182,17 +182,17 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                       ? ultima.preco_recomendado
                       : ultima.preco_premium;
                 return (
-                  <Card key={nivel.id} className={nivel.id === "BUSINESS" ? "border-slate-900" : ""}>
+                  <Card key={nivel.id} className={nivel.id === "BUSINESS" ? "border-primary" : ""}>
                     <CardHeader>
                       <CardTitle className="flex items-center justify-between text-base">
                         {nivel.nome}
                         {nivel.id === "BUSINESS" ? <Badge>Recomendada</Badge> : null}
                       </CardTitle>
-                      <p className="text-xs text-slate-500">{nivel.descricao}</p>
+                      <p className="text-xs text-muted-foreground">{nivel.descricao}</p>
                     </CardHeader>
                     <CardContent>
                       <p className="text-2xl font-semibold tabular-nums">{eur(valor)}</p>
-                      <p className="mb-4 text-xs text-slate-500">
+                      <p className="mb-4 text-xs text-muted-foreground">
                         + {eur(ultima.mensalidade)}/mês de manutenção
                       </p>
                       <form action={criarProposta} className="space-y-3">
@@ -244,12 +244,12 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                 <CardTitle className="text-base">Propostas desta lead</CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="divide-y divide-slate-100">
+                <ul className="divide-y divide-border/60">
                   {propostas.map((p) => (
                     <li key={p.id} className="flex flex-wrap items-center gap-3 py-3">
                       <Badge variant="outline">{p.nivel}</Badge>
                       <span className="font-semibold tabular-nums">{eur(p.valor)}</span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         {eur(p.mensalidade)}/mês · {p.rondas_alteracoes} rondas · válida{" "}
                         {p.validade_dias} dias · criada {data(p.criado_em)}
                       </span>
@@ -258,7 +258,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                         <select
                           name="estado"
                           defaultValue={p.estado}
-                          className="h-8 rounded-md border border-slate-200 px-2 text-xs"
+                          className="h-8 rounded-md border border-border px-2 text-xs"
                         >
                           {["Rascunho", "Enviada", "Aceite", "Recusada"].map((e) => (
                             <option key={e} value={e}>
@@ -282,7 +282,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
           <Card className="max-w-3xl">
             <CardHeader>
               <CardTitle className="text-base">Converter em projeto</CardTitle>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Cria o cliente (se ainda não existir), o projeto, as faturas do plano de pagamento
                 escolhido e, se indicado, o contrato de manutenção.
               </p>
@@ -352,8 +352,8 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
 
 function Info({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-      <p className="text-[11px] tracking-wide text-slate-500 uppercase">{rotulo}</p>
+    <div className="rounded-lg border border-border bg-card px-3 py-2">
+      <p className="text-[11px] tracking-wide text-muted-foreground uppercase">{rotulo}</p>
       <p className="truncate text-sm font-medium">{valor}</p>
     </div>
   );

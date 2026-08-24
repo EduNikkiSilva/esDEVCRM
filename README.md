@@ -10,19 +10,19 @@ externos nem nuvem: nada sai da tua máquina.
 
 ## Arrancar
 
-Requisitos: Node.js 20 ou superior.
+**Windows:** duplo clique em `esdev-crm.bat`. Instala, compila e abre o CRM numa janela
+própria, sem barra de endereço, como uma app de desktop. **macOS / Linux:** `./esdev-crm.sh`.
+
+O guia completo de instalação — onde guardar a pasta, como afixar no menu Iniciar, backups e
+acesso pelo telemóvel — está em **[INSTALACAO.md](INSTALACAO.md)**.
+
+Manualmente, com Node.js 20 ou superior:
 
 ```bash
 npm install
 npm run dados-exemplo   # opcional: insere os dois exemplos do documento (§26 e §27)
-npm run dev             # http://localhost:43127
-```
-
-Para uso normal do dia a dia, compila uma vez e corre em modo produção (arranca mais rápido):
-
-```bash
-npm run build
-npm start               # http://localhost:43127
+npm run dev             # desenvolvimento, http://localhost:43127
+npm run build && npm start   # uso normal, arranca mais rápido
 ```
 
 A base de dados é criada automaticamente no primeiro arranque. Para a guardar noutro sítio
@@ -48,7 +48,16 @@ $env:ESDEV_DB="C:\Users\eduar\OneDrive\esdev\esdev.db"; npm start
 | **Projetos** | Fase de desenvolvimento (§16), horas estimadas vs reais, €/h efetivo, checklist de entrega (§17), tarefas e faturas do projeto. |
 | **Faturação** | Marcos de pagamento, trabalho adicional e custos de terceiros; pago vs pendente. |
 | **Manutenção** | Contratos recorrentes, planos Basic/Business/Pro e receita mensal e anualizada. |
-| **Referências** | As tabelas do documento sempre à mão: preços V1, extras, planos, processo, contrato, checklists. |
+| **Referências** | As tabelas do documento sempre à mão: preços, mercado, extras, planos, processo, contrato, checklists. |
+
+Transversal à app:
+
+- **Tema claro e escuro**, com opção "sistema", no fundo da barra lateral.
+- **Paleta de comandos** com `Ctrl+K`: salta para qualquer página, lead, cliente ou projeto.
+- **Pipeline com arrastar-e-largar**: mover um cartão entre colunas muda a fase da lead e
+  grava logo na base de dados.
+- **Responsivo**: em telemóvel a barra lateral vira painel deslizante, útil para consultar uma
+  lead numa reunião.
 
 ### O fluxo pensado para o dia a dia
 
@@ -138,18 +147,21 @@ mesmos valores para os casos típicos (um institucional de 5 páginas dá 2.950 
 ## Estrutura
 
 ```
-src/app/           páginas (App Router, Server Components)
-src/components/    calculadora, briefing, checklist, navegação e UI (shadcn/ui)
-src/lib/pricing.ts motor de preços — tabelas §8/§9 e fatores §6
-src/lib/dominio.ts pipeline, briefing, checklists e regras do documento
-src/lib/db.ts      ligação SQLite local
-src/lib/actions.ts escritas (Server Actions)
-db/schema.sql      esquema da base de dados
-scripts/           dados de exemplo e gerador da calculadora em Excel
+esdev-crm.bat        arranque com um clique no Windows
+esdev-crm.sh         arranque em macOS / Linux
+src/app/             páginas (App Router, Server Components)
+src/components/      calculadora, briefing, quadro de pipeline, gráficos, navegação e UI
+src/lib/pricing.ts   motor de preços — tabelas de pacotes, extras e fatores
+src/lib/mercado.ts   faixas de mercado e fontes usadas na calibração
+src/lib/dominio.ts   pipeline, briefing, checklists e regras do documento
+src/lib/db.ts        ligação SQLite local
+src/lib/actions.ts   escritas (Server Actions)
+db/schema.sql        esquema da base de dados
+scripts/             dados de exemplo e gerador da calculadora em Excel
 ```
 
-Stack: Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, SQLite via
-better-sqlite3.
+Stack: Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, Recharts, next-themes e
+SQLite via better-sqlite3.
 
 ## Avisos
 

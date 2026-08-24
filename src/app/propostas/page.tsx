@@ -16,9 +16,9 @@ import { data, eur } from "@/lib/format";
 import { listarTodasPropostas } from "@/lib/queries";
 
 const COR_ESTADO: Record<string, string> = {
-  Rascunho: "bg-slate-100 text-slate-700",
+  Rascunho: "bg-secondary text-foreground/80",
   Enviada: "bg-violet-50 text-violet-700 border-violet-200",
-  Aceite: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  Aceite: "bg-emerald-50 text-success border-emerald-200",
   Recusada: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
@@ -85,10 +85,10 @@ export default function PropostasPage() {
                         <Badge variant="outline">{p.nivel}</Badge>
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{eur(p.valor)}</TableCell>
-                      <TableCell className="text-right tabular-nums text-slate-500">
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
                         {eur(p.mensalidade)}/mês
                       </TableCell>
-                      <TableCell className="text-slate-500">{data(p.criado_em)}</TableCell>
+                      <TableCell className="text-muted-foreground">{data(p.criado_em)}</TableCell>
                       <TableCell>
                         <form action={mudarEstadoProposta} className="flex items-center gap-2">
                           <input type="hidden" name="id" value={p.id} />

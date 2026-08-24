@@ -28,19 +28,19 @@ export const FASES_ABERTAS: readonly Fase[] = FASES.filter(
 );
 
 export const COR_FASE: Record<Fase, string> = {
-  "Novo Lead": "bg-slate-100 text-slate-700 border-slate-200",
-  Contactado: "bg-sky-50 text-sky-700 border-sky-200",
-  "Reunião marcada": "bg-sky-100 text-sky-800 border-sky-200",
-  "Discovery/Briefing": "bg-indigo-50 text-indigo-700 border-indigo-200",
-  "Proposta enviada": "bg-violet-50 text-violet-700 border-violet-200",
-  Negociação: "bg-amber-50 text-amber-800 border-amber-200",
-  Aceite: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  "Contrato assinado": "bg-emerald-50 text-emerald-700 border-emerald-200",
-  "Pagamento inicial": "bg-emerald-100 text-emerald-800 border-emerald-200",
-  "Projeto ativo": "bg-teal-50 text-teal-700 border-teal-200",
-  Entregue: "bg-blue-50 text-blue-700 border-blue-200",
-  Manutenção: "bg-cyan-50 text-cyan-700 border-cyan-200",
-  Perdido: "bg-rose-50 text-rose-700 border-rose-200",
+  "Novo Lead": "bg-muted text-muted-foreground border-border",
+  Contactado: "bg-chart-2/10 text-chart-2 border-chart-2/25",
+  "Reunião marcada": "bg-chart-2/15 text-chart-2 border-chart-2/30",
+  "Discovery/Briefing": "bg-chart-1/10 text-chart-1 border-chart-1/25",
+  "Proposta enviada": "bg-chart-1/15 text-chart-1 border-chart-1/30",
+  Negociação: "bg-chart-4/15 text-chart-4 border-chart-4/30",
+  Aceite: "bg-chart-3/12 text-chart-3 border-chart-3/25",
+  "Contrato assinado": "bg-chart-3/15 text-chart-3 border-chart-3/30",
+  "Pagamento inicial": "bg-chart-3/20 text-chart-3 border-chart-3/35",
+  "Projeto ativo": "bg-chart-2/20 text-chart-2 border-chart-2/35",
+  Entregue: "bg-chart-1/20 text-chart-1 border-chart-1/35",
+  Manutenção: "bg-chart-3/10 text-chart-3 border-chart-3/25",
+  Perdido: "bg-chart-5/10 text-chart-5 border-chart-5/25",
 };
 
 /** §16 — fases de desenvolvimento do projeto. */

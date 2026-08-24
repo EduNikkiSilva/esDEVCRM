@@ -64,7 +64,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
             </form>
             <form action={apagarCliente} className="mt-4">
               <input type="hidden" name="id" value={cliente.id} />
-              <Button type="submit" variant="ghost" size="sm" className="text-rose-600">
+              <Button type="submit" variant="ghost" size="sm" className="text-destructive">
                 <Trash2 className="size-4" /> Apagar cliente
               </Button>
             </form>
@@ -78,15 +78,15 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
             </CardHeader>
             <CardContent>
               {projetos.length === 0 ? (
-                <p className="text-sm text-slate-500">Sem projetos.</p>
+                <p className="text-sm text-muted-foreground">Sem projetos.</p>
               ) : (
-                <ul className="divide-y divide-slate-100">
+                <ul className="divide-y divide-border/60">
                   {projetos.map((p) => (
                     <li key={p.id} className="flex items-center justify-between gap-3 py-2">
                       <Link href={`/projetos/${p.id}`} className="text-sm font-medium hover:underline">
                         {p.nome}
                       </Link>
-                      <span className="flex items-center gap-3 text-xs text-slate-500">
+                      <span className="flex items-center gap-3 text-xs text-muted-foreground">
                         <Badge variant="outline">{p.estado}</Badge>
                         <span className="tabular-nums">{eur(p.preco)}</span>
                       </span>
@@ -103,14 +103,14 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
             </CardHeader>
             <CardContent>
               {faturas.length === 0 ? (
-                <p className="text-sm text-slate-500">Sem faturas.</p>
+                <p className="text-sm text-muted-foreground">Sem faturas.</p>
               ) : (
-                <ul className="divide-y divide-slate-100">
+                <ul className="divide-y divide-border/60">
                   {faturas.map((f) => (
                     <li key={f.id} className="flex items-center justify-between gap-3 py-2 text-sm">
                       <span>
                         {f.descricao}
-                        <span className="ml-2 text-xs text-slate-500">{data(f.emitida_em)}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">{data(f.emitida_em)}</span>
                       </span>
                       <span className="flex items-center gap-3">
                         <Badge variant={f.estado === "Paga" ? "default" : "outline"}>

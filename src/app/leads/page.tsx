@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { FolderKanban, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageHeader, Vazio } from "@/components/ui-kit";
-import { COR_FASE, FASES, type Fase } from "@/lib/dominio";
-import { eur, data } from "@/lib/format";
+import { QuadroPipeline } from "@/components/quadro-pipeline";
+import { PageHeader, Stat, Vazio } from "@/components/ui-kit";
+import { FASES, FASES_ABERTAS, type Fase } from "@/lib/dominio";
+import { eur } from "@/lib/format";
 import { listarLeads } from "@/lib/queries";
 
 // Lê a base de dados local a cada pedido.
@@ -19,11 +19,16 @@ export default async function LeadsPage({
   const leads = listarLeads();
   const colunas = filtro && FASES.includes(filtro as Fase) ? [filtro as Fase] : FASES;
 
+  const abertas = leads.filter((l) => FASES_ABERTAS.includes(l.fase as Fase));
+  const valorAberto = abertas.reduce((s, l) => s + l.valor_estimado, 0);
+  const ganhas = leads.filter((l) => ["Entregue", "Manutenção"].includes(l.fase));
+  const perdidas = leads.filter((l) => l.fase === "Perdido");
+
   return (
     <>
       <PageHeader
         titulo="Pipeline"
-        descricao="Lead → Contactado → Reunião → Discovery/Briefing → Proposta → Negociação → Aceite → Contrato → Pagamento inicial → Projeto ativo → Entregue → Manutenção."
+        descricao="Arrasta as leads entre colunas para mudar de fase. O valor de cada coluna atualiza-se de imediato."
       >
         {filtro ? (
           <Button asChild variant="outline">
@@ -37,8 +42,22 @@ export default async function LeadsPage({
         </Button>
       </PageHeader>
 
+      {leads.length > 0 ? (
+        <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Stat titulo="Em aberto" valor={String(abertas.length)} nota="Oportunidades ativas" />
+          <Stat titulo="Valor do pipeline" valor={eur(valorAberto)} nota="Soma dos valores estimados" />
+          <Stat titulo="Ganhas" valor={String(ganhas.length)} tom="bom" nota="Entregues ou em manutenção" />
+          <Stat
+            titulo="Perdidas"
+            valor={String(perdidas.length)}
+            tom={perdidas.length ? "mau" : "neutro"}
+            nota="Analisar o motivo antes de arquivar"
+          />
+        </div>
+      ) : null}
+
       {leads.length === 0 ? (
-        <Vazio titulo="Ainda não há leads registadas.">
+        <Vazio titulo="Ainda não há leads registadas." icone={FolderKanban}>
           Cada contacto entra aqui como lead e percorre o pipeline até virar projeto e, depois,
           manutenção.
           <div className="mt-4">
@@ -48,51 +67,7 @@ export default async function LeadsPage({
           </div>
         </Vazio>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          {colunas.map((fase) => {
-            const doFase = leads.filter((l) => l.fase === fase);
-            const total = doFase.reduce((s, l) => s + (l.valor_estimado ?? 0), 0);
-            return (
-              <section key={fase} className="w-72 shrink-0">
-                <div className="mb-2 flex items-baseline justify-between gap-2">
-                  <h2 className="text-sm font-semibold">{fase}</h2>
-                  <span className="text-xs text-slate-500 tabular-nums">
-                    {doFase.length} · {eur(total)}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {doFase.length === 0 ? (
-                    <p className="rounded-md border border-dashed border-slate-200 px-3 py-6 text-center text-xs text-slate-400">
-                      Vazio
-                    </p>
-                  ) : (
-                    doFase.map((l) => (
-                      <Link
-                        key={l.id}
-                        href={`/leads/${l.id}`}
-                        className="block rounded-lg border border-slate-200 bg-white p-3 shadow-xs transition-shadow hover:shadow-md"
-                      >
-                        <p className="truncate text-sm font-semibold">{l.empresa}</p>
-                        <p className="truncate text-xs text-slate-500">
-                          {l.contacto_nome ?? "Sem contacto"}
-                          {l.tipo_solucao ? ` · ${l.tipo_solucao}` : ""}
-                        </p>
-                        <div className="mt-2 flex items-center justify-between gap-2">
-                          <Badge variant="outline" className={COR_FASE[l.fase as Fase]}>
-                            {eur(l.valor_estimado)}
-                          </Badge>
-                          <span className="text-[11px] text-slate-400">
-                            {data(l.atualizado_em)}
-                          </span>
-                        </div>
-                      </Link>
-                    ))
-                  )}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+        <QuadroPipeline leads={leads} fases={colunas} />
       )}
     </>
   );

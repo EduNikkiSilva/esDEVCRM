@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,50 +18,104 @@ export function PageHeader({
   return (
     <header className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{titulo}</h1>
-        {descricao ? <p className="mt-1 max-w-2xl text-sm text-slate-500">{descricao}</p> : null}
+        <h2 className="text-2xl font-semibold tracking-tight sm:text-[28px]">{titulo}</h2>
+        {descricao ? (
+          <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+            {descricao}
+          </p>
+        ) : null}
       </div>
       {children ? <div className="flex shrink-0 flex-wrap gap-2">{children}</div> : null}
     </header>
   );
 }
 
+const TONS = {
+  neutro: { texto: "text-foreground", chip: "bg-secondary text-secondary-foreground" },
+  bom: { texto: "text-success", chip: "bg-success/10 text-success" },
+  alerta: { texto: "text-warning", chip: "bg-warning/10 text-warning" },
+  mau: { texto: "text-destructive", chip: "bg-destructive/10 text-destructive" },
+} as const;
+
 export function Stat({
   titulo,
   valor,
   nota,
   tom = "neutro",
+  icone: Icone,
 }: {
   titulo: string;
   valor: string;
   nota?: string;
-  tom?: "neutro" | "bom" | "alerta";
+  tom?: keyof typeof TONS;
+  icone?: LucideIcon;
 }) {
+  const estilo = TONS[tom];
   return (
-    <Card className="gap-0 py-4">
-      <CardContent className="px-4">
-        <p className="text-xs font-medium tracking-wide text-slate-500 uppercase">{titulo}</p>
-        <p
-          className={cn(
-            "mt-1 text-2xl font-semibold tabular-nums",
-            tom === "bom" && "text-emerald-600",
-            tom === "alerta" && "text-amber-600",
-          )}
-        >
+    <Card className="cartao-suave gap-0 overflow-hidden py-0">
+      <CardContent className="relative px-4 py-4">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-[11px] font-medium tracking-[0.08em] text-muted-foreground uppercase">
+            {titulo}
+          </p>
+          {Icone ? (
+            <span className={cn("grid size-7 shrink-0 place-items-center rounded-lg", estilo.chip)}>
+              <Icone className="size-3.5" />
+            </span>
+          ) : null}
+        </div>
+        <p className={cn("num mt-2 text-[26px] leading-none font-semibold", estilo.texto)}>
           {valor}
         </p>
-        {nota ? <p className="mt-1 text-xs text-slate-500">{nota}</p> : null}
+        {nota ? <p className="mt-2 text-xs text-muted-foreground">{nota}</p> : null}
       </CardContent>
     </Card>
   );
 }
 
-export function Vazio({ titulo, children }: { titulo: string; children?: ReactNode }) {
+export function Vazio({
+  titulo,
+  children,
+  icone: Icone,
+}: {
+  titulo: string;
+  children?: ReactNode;
+  icone?: LucideIcon;
+}) {
   return (
-    <div className="rounded-lg border border-dashed border-slate-300 bg-white/60 px-6 py-12 text-center">
-      <p className="text-sm font-medium text-slate-700">{titulo}</p>
-      {children ? <div className="mt-3 text-sm text-slate-500">{children}</div> : null}
+    <div className="rounded-2xl border border-dashed border-border bg-card/40 px-6 py-14 text-center">
+      {Icone ? (
+        <span className="mx-auto mb-3 grid size-10 place-items-center rounded-xl bg-secondary text-muted-foreground">
+          <Icone className="size-5" />
+        </span>
+      ) : null}
+      <p className="text-sm font-medium">{titulo}</p>
+      {children ? (
+        <div className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">{children}</div>
+      ) : null}
     </div>
+  );
+}
+
+export function Secao({
+  titulo,
+  acao,
+  children,
+  className,
+}: {
+  titulo: string;
+  acao?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={className}>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold">{titulo}</h3>
+        {acao}
+      </div>
+      {children}
+    </section>
   );
 }
 
@@ -89,7 +144,7 @@ export function Campo({
 }: CampoProps) {
   return (
     <div className={cn("grid gap-1.5", className)}>
-      <Label htmlFor={nome} className="text-xs font-medium text-slate-600">
+      <Label htmlFor={nome} className="text-xs font-medium text-muted-foreground">
         {label}
       </Label>
       {area ? (
@@ -133,14 +188,14 @@ export function CampoSelect({
   const itens = opcoes.map((o) => (typeof o === "string" ? { valor: o, label: o } : o));
   return (
     <div className={cn("grid gap-1.5", className)}>
-      <Label htmlFor={nome} className="text-xs font-medium text-slate-600">
+      <Label htmlFor={nome} className="text-xs font-medium text-muted-foreground">
         {label}
       </Label>
       <select
         id={nome}
         name={nome}
         defaultValue={valor ?? ""}
-        className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm shadow-xs outline-none focus-visible:border-slate-400 focus-visible:ring-[3px] focus-visible:ring-slate-200"
+        className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
       >
         {vazioLabel ? <option value="">{vazioLabel}</option> : null}
         {itens.map((i) => (
