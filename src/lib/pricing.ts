@@ -1,1 +1,1 @@
-// TODO: pricing values will be applied in the next commit.
+// RESTORE NEEDED: use git revert manually
