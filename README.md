@@ -1,99 +1,126 @@
-# Calculadora de Preços esDEV
+# esDEV CRM
 
-Calculadora de orçamentos em Excel para a esDEV: introduzem-se as características de um
-projeto e o ficheiro devolve **Preço Mínimo / Recomendado / Premium**, horas estimadas,
-prazo, plano de pagamento e **mensalidade de manutenção**.
+CRM interno da esDEV, para correr **localmente no teu computador**. É a implementação do
+documento *esDEV — Sistema Operacional e Comercial v1.0*: pipeline comercial, briefing,
+análise interna, calculadora de preços, propostas em três níveis, projetos, faturação,
+manutenção e receita recorrente.
 
-O `.xlsx` não é um ficheiro estático: é gerado por script e contém fórmulas nativas de
-Excel (`VLOOKUP`, `ROUND`, `MAX`, …), logo recalcula tudo no Excel, LibreOffice, Numbers
-ou Google Sheets sem precisar de macros.
+Os dados ficam num único ficheiro SQLite em `data/esdev.db`. Não há contas, servidores
+externos nem nuvem: nada sai da tua máquina.
 
-## Ficheiros
+## Arrancar
 
-| Ficheiro | O que é |
+Requisitos: Node.js 20 ou superior.
+
+```bash
+npm install
+npm run dados-exemplo   # opcional: insere os dois exemplos do documento (§26 e §27)
+npm run dev             # http://localhost:43127
+```
+
+Para uso normal do dia a dia, compila uma vez e corre em modo produção (arranca mais rápido):
+
+```bash
+npm run build
+npm start               # http://localhost:43127
+```
+
+A base de dados é criada automaticamente no primeiro arranque. Para a guardar noutro sítio
+(uma pasta sincronizada, por exemplo), define `ESDEV_DB`:
+
+```bash
+# Windows PowerShell
+$env:ESDEV_DB="C:\Users\eduar\OneDrive\esdev\esdev.db"; npm start
+```
+
+**Cópia de segurança:** copia `data/esdev.db`. É o sistema todo.
+
+## O que está lá dentro
+
+| Página | O que faz |
 |---|---|
-| `Calculadora_Precos_esDEV.xlsx` | O ficheiro a usar no dia a dia |
-| `scripts/gerar_calculadora.py` | Gera o `.xlsx` (fonte de verdade do modelo) |
-| `scripts/verificar_calculadora.py` | Avalia as fórmulas e imprime 4 cenários de teste |
+| **Dashboard** | Pipeline aberto, recebido, em falta, receita recorrente, projetos ativos, rentabilidade real (§29) e regras de ouro (§25). |
+| **Pipeline** | Quadro com as 12 fases do §24, de Novo Lead a Manutenção, com valor por coluna. |
+| **Lead** | Cinco separadores: dados, briefing completo do §5, análise interna + calculadora, propostas e conversão em projeto. |
+| **Calculadora** | Pacote base (§8) + extras (§9) + complexidade (§6) + urgência + risco + custos externos → mínimo, recomendado, premium e mensalidade sugerida. |
+| **Propostas** | Todas as propostas, estado (rascunho / enviada / aceite / recusada) e taxa de aceitação. |
+| **Clientes** | Dados de faturação, projetos, faturas e manutenção por cliente. |
+| **Projetos** | Fase de desenvolvimento (§16), horas estimadas vs reais, €/h efetivo, checklist de entrega (§17), tarefas e faturas do projeto. |
+| **Faturação** | Marcos de pagamento, trabalho adicional e custos de terceiros; pago vs pendente. |
+| **Manutenção** | Contratos recorrentes, planos Basic/Business/Pro e receita mensal e anualizada. |
+| **Referências** | As tabelas do documento sempre à mão: preços V1, extras, planos, processo, contrato, checklists. |
 
-## Como usar
+### O fluxo pensado para o dia a dia
 
-Abrir `Calculadora_Precos_esDEV.xlsx` e preencher **apenas as células amarelas** da folha
-`Calculadora`. Tudo o resto é fórmula.
+1. Entra um contacto → **Nova lead** (fase *Novo Lead*).
+2. Reunião → preencher o **briefing** no separador do lead. A barra mostra quanto falta.
+3. **Análise & preço**: mexer nos pacotes, extras e nas notas de 1 a 5. Guardar fixa os três
+   escalões na lead e atualiza o valor estimado.
+4. **Propostas**: criar Essential, Business ou Premium a partir da análise, com âmbito,
+   exclusões e rondas de alterações. Marcar como *Enviada* move a lead no pipeline.
+5. Proposta aceite → **Converter em projeto**: cria o cliente, o projeto, as faturas do plano
+   de pagamento escolhido (50/50 ou 40/30/30) e o contrato de manutenção.
+6. Durante o projeto: registar horas reais, avançar a fase, marcar faturas pagas e fechar a
+   checklist de entrega.
+7. Entregue → o contrato de manutenção passa a contar na receita recorrente.
 
-Folhas:
-
-- **Calculadora** — inputs e resultados. É a única folha que se toca a orçamentar.
-- **Detalhe** — auditoria: horas e euros fase a fase, para justificar o preço ao cliente
-  (ou a ti mesmo) sem adivinhar.
-- **Parametros** — tarifas, tabelas de horas por tipo de projeto, fatores e planos de
-  manutenção. **É aqui que se calibra o modelo**, nunca nas fórmulas.
-- **Proposta** — resumo já em texto corrido, pronto a copiar para o e-mail de proposta.
-
-## Modelo de cálculo
+## Como o preço é calculado
 
 ```
-horas por fase   = horas base do tipo de projeto
-                   + páginas extra × horas/página   (40% design, 60% frontend)
-                   + integrações extra × horas/integração
-                   + horas de conteúdos + horas de SEO
+preço técnico = (pacote base + extras)
+                × fator de complexidade      média das 7 notas do §6, de ×0,80 a ×1,20
+                × (1 + urgência)             0% a +30%
+                × (1 + prioritário)          +10% quando ativo
+                × (1 + margem de risco)      0% a +20%
+                + custos externos            não multiplicados
 
-fator por fase   = complexidade
-                   × nível de design      (só UX/Design e Frontend)
-                   × idiomas adicionais   (Frontend, QA, conteúdos, SEO)
-
-valor            = Σ (horas ajustadas × tarifa da fase)
-                   + gestão de projeto (15% das horas técnicas)
-                   + buffer de risco (10%)
-
-preço base       = valor × fator de urgência × fator de perfil de cliente
-
-Mínimo           = MAX(piso do tipo de projeto, preço base × 0,85) arredondado a 25 €
-Recomendado      = MAX(piso do tipo de projeto, preço base)        arredondado a 25 €
-Premium          = MAX(piso do tipo de projeto, preço base × 1,30) arredondado a 25 €
-                   ... e a todos: − desconto comercial + custos externos a repassar
-
-manutenção/mês   = MAX(mínimo do plano, % do preço recomendado)
-                   Essencial 2,0% (mín. 39 €) · Pro 3,5% (mín. 89 €) · Premium 5,5% (mín. 149 €)
+preço final = preço técnico ± ajuste comercial, arredondado a 10 €
 ```
 
-Os três escalões existem para negociar com números, não com instinto: o **Mínimo** é o
-piso abaixo do qual o projeto se recusa, o **Recomendado** é o valor que vai na proposta,
-o **Premium** cobre prioridade na fila, revisões extra e acompanhamento próximo.
+Os três escalões (mínimo, recomendado, premium) percorrem a mesma fórmula partindo das três
+colunas da tabela do §8, e mapeiam diretamente nos níveis Essential, Business e Premium das
+propostas (§10). A mensalidade sugerida escolhe o plano do §19 pelo peso do projeto e pela
+categoria, posicionando o valor dentro da faixa do plano.
 
-## Regenerar o ficheiro
+O valor/hora efetivo é mostrado sempre, comparado com a referência interna de 35 €/h (§7).
+Fica vermelho quando o preço não paga as horas — é o sinal do §29 de que o orçamento precisa
+de correção, não de desconto.
+
+Onde afinar: `src/lib/pricing.ts` tem as tabelas de pacotes, extras, planos de manutenção e
+todos os fatores no topo do ficheiro. É o único sítio a mexer para recalibrar preços.
+
+## Calculadora em Excel
+
+O repositório mantém também a versão em folha de cálculo, útil para orçamentar fora do CRM
+ou para partilhar o raciocínio com terceiros:
 
 ```bash
-pip install openpyxl
 python scripts/gerar_calculadora.py Calculadora_Precos_esDEV.xlsx
+python scripts/verificar_calculadora.py   # avalia as fórmulas em 4 cenários
 ```
 
-Verificar que as fórmulas dão os valores esperados em vários cenários:
+O modelo dela é independente (baseado em horas por fase e tarifas). O CRM é a fonte de
+verdade; o Excel é o instrumento de apoio.
 
-```bash
-pip install formulas
-python scripts/verificar_calculadora.py
+## Estrutura
+
+```
+src/app/           páginas (App Router, Server Components)
+src/components/    calculadora, briefing, checklist, navegação e UI (shadcn/ui)
+src/lib/pricing.ts motor de preços — tabelas §8/§9 e fatores §6
+src/lib/dominio.ts pipeline, briefing, checklists e regras do documento
+src/lib/db.ts      ligação SQLite local
+src/lib/actions.ts escritas (Server Actions)
+db/schema.sql      esquema da base de dados
+scripts/           dados de exemplo e gerador da calculadora em Excel
 ```
 
-Saída atual (arredondada) com os parâmetros por defeito:
+Stack: Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, SQLite via
+better-sqlite3.
 
-| Cenário | Horas | Mínimo | Recomendado | Premium | Manutenção Pro |
-|---|---|---|---|---|---|
-| Landing page simples, template | 23 h | 750 € | 875 € | 1 150 € | 89 €/mês |
-| Site institucional, 5 páginas | 81 h | 3 025 € | 3 575 € | 4 650 € | 125 €/mês |
-| E-commerce 25 pág., 2 idiomas, urgente | 582 h | 37 450 € | 44 050 € | 57 275 € | 1 542 €/mês |
-| Web app crítica, corporate, −10% | 653 h | 27 710 € | 32 548 € | 42 200 € | 1 139 €/mês |
+## Avisos
 
-## Calibração — ler antes de usar em produção
-
-Os números de partida são estimativas de mercado para uma operação pequena em Portugal,
-não os teus custos reais. Dois pontos a afinar primeiro:
-
-1. **Tarifas e horas base** (`Parametros`, blocos 1 e 3). Compara com 2 ou 3 projetos já
-   fechados: mete os inputs desses projetos na calculadora e ajusta as horas base até o
-   Recomendado aterrar perto do que faturaste.
-2. **Os multiplicadores acumulam.** Complexidade × design × urgência × perfil de cliente
-   pode chegar a ~3,2×. É intencional (um e-commerce à medida, multilingue e urgente para
-   um cliente corporate *é* outro projeto), mas se sentires o topo da tabela agressivo, o
-   ajuste certo é baixar os fatores em `Parametros`, não descontar no fim — o desconto
-   comercial sai direto da margem e vê-se na célula "Valor/hora efetivo".
+Os preços são referências internas V1 e devem ser revistos com custos e dados reais. O
+modelo de contrato e as cláusulas listadas em Referências precisam de revisão jurídica antes
+de uso definitivo, e o enquadramento fiscal deve ser validado com contabilista — tal como o
+próprio documento indica.
