@@ -126,8 +126,20 @@ git commit -m "descrição curta do que mudou"
 git push
 ```
 
-Cada push corre as verificações de `.github/workflows/ci.yml` no GitHub: lint, tipos e build.
-Se algo quebrar, aparece o visto vermelho antes de estragares a instalação local.
+### Ativar as verificações automáticas
+
+O ficheiro de CI está em `.github/ci.yml`, fora da pasta que o GitHub lê, porque tokens sem
+o âmbito `workflow` não podem criar workflows. Para o ativar, uma vez, na tua máquina:
+
+```powershell
+mkdir .github\workflows
+git mv .github\ci.yml .github\workflows\ci.yml
+git commit -m "Ativar CI"
+git push
+```
+
+A partir daí cada push corre lint, verificação de tipos e build no GitHub, e vês um visto
+vermelho se algo quebrar antes de estragares a instalação local.
 
 ### Trabalho com agentes
 
