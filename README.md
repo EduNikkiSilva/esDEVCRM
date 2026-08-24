@@ -88,6 +88,43 @@ Transversal à app:
    checklist de entrega.
 7. Entregue → o contrato de manutenção passa a contar na receita recorrente.
 
+## Como trabalhamos (regras de colaboração)
+
+A `main` é tua. Eu nunca lhe faço push.
+
+1. **Tu pedes** a alteração, em texto normal.
+2. **Eu implemento e testo** aqui, e envio para uma branch com o prefixo `cursor/`.
+3. **Tu revês, decides e publicas.** O merge para a `main` é sempre teu.
+
+No teu computador, para trazer e experimentar o que eu fiz:
+
+```powershell
+cd "$env:USERPROFILE\Documents\esDEVCRM"
+git fetch origin
+git checkout cursor/<nome-da-branch>
+npm install            # só se as dependências mudaram
+npm run dev            # experimentar em http://localhost:43127
+```
+
+Se gostares, o merge com a tua assinatura num único commit:
+
+```powershell
+git checkout main
+git merge --squash cursor/<nome-da-branch>
+git commit -m "descrição da alteração"
+git push
+```
+
+O `--squash` junta o meu trabalho num só commit, assinado por ti — a `main` fica com o teu
+histórico, limpo. Se não gostares, `git checkout main` e ignoras a branch; nada se perdeu.
+
+Para apagar branches já integradas:
+
+```powershell
+git branch -d cursor/<nome-da-branch>
+git push origin --delete cursor/<nome-da-branch>
+```
+
 ## Fazer alterações
 
 O GitHub é o armazém e o canal de transporte; a edição é sempre em código. Há dois caminhos.
