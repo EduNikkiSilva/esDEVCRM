@@ -10,7 +10,8 @@ externos nem nuvem: nada sai da tua máquina.
 
 ## Arrancar
 
-**Windows:** duplo clique em `esdev-crm.bat`. Instala, compila e abre o CRM numa janela
+**Windows:** corre `instalar.ps1` uma vez (instala, compila e cria os atalhos) e depois abre
+pelo atalho **esDEV CRM**, ou faz duplo clique em `esdev-crm.bat`. Instala, compila e abre o CRM numa janela
 própria, sem barra de endereço, como uma app de desktop. **macOS / Linux:** `./esdev-crm.sh`.
 
 O guia completo de instalação — onde guardar a pasta, como afixar no menu Iniciar, backups e
@@ -42,8 +43,8 @@ A base de dados é criada automaticamente no primeiro arranque. Para a guardar n
 (uma pasta sincronizada, por exemplo), define `ESDEV_DB`:
 
 ```bash
-# Windows PowerShell
-$env:ESDEV_DB="C:\Users\eduar\OneDrive\esdev\esdev.db"; npm start
+# Windows PowerShell — permanente para o teu utilizador
+[Environment]::SetEnvironmentVariable("ESDEV_DB", "C:\esDEV\data\esdev.db", "User")
 ```
 
 **Cópia de segurança:** copia `data/esdev.db`. É o sistema todo.

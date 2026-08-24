@@ -10,19 +10,32 @@ ficheiro teu.
 
 ## 1. Onde guardar a pasta
 
-Guarda o projeto numa pasta curta, tua, e **fora de pastas sincronizadas**:
+Destino escolhido:
 
 ```
-C:\esDEV\crm
+C:\Users\eduar\Documents\esDEVCRM
 ```
 
-Porque não em OneDrive, Google Drive ou Dropbox: a base de dados SQLite é escrita
-continuamente enquanto trabalhas, e os clientes de sincronização podem bloquear ou
-corromper o ficheiro a meio de uma escrita. A pasta de trabalho fica no disco local; a
-cópia de segurança é que vai para a nuvem (ponto 5).
+O nome da pasta é livre: nada no código depende dele.
 
-Evita também o Ambiente de Trabalho e a pasta Documentos se estiverem sincronizados com o
-OneDrive — em muitos PCs Windows estão, por omissão.
+**Verifica primeiro se os teus Documentos estão no OneDrive.** No PowerShell:
+
+```powershell
+[Environment]::GetFolderPath("MyDocuments")
+```
+
+Se a resposta incluir `OneDrive` (por exemplo `C:\Users\eduar\OneDrive\Documentos`), a
+pasta é sincronizada. A aplicação funciona lá, mas a base de dados SQLite é escrita
+continuamente enquanto trabalhas e a sincronização pode bloqueá-la ou corrompê-la a meio de
+uma escrita. Nesse caso mantém o projeto em Documentos e põe só os **dados** fora da nuvem,
+uma vez:
+
+```powershell
+[Environment]::SetEnvironmentVariable("ESDEV_DB", "C:\esDEV\data\esdev.db", "User")
+```
+
+Fecha e reabre o PowerShell depois disto. O `instalar.ps1` deteta e avisa-te se a pasta
+estiver sincronizada.
 
 ## 2. Instalar o Node.js (uma vez, ~2 minutos)
 
@@ -42,17 +55,31 @@ Deve responder algo como `v22.14.0`. Se responder erro, reinicia o PowerShell.
 Com Git instalado (recomendado, porque permite receber atualizações depois):
 
 ```powershell
-mkdir C:\esDEV
-cd C:\esDEV
-git clone <url-do-repositorio> crm
-cd crm
+git clone <url-do-repositorio> "$env:USERPROFILE\Documents\esDEVCRM"
+cd "$env:USERPROFILE\Documents\esDEVCRM"
 ```
 
-Sem Git: descarrega o repositório como ZIP e extrai para `C:\esDEV\crm`.
+Sem Git: descarrega o repositório como ZIP e extrai para
+`C:\Users\eduar\Documents\esDEVCRM`.
 
-## 4. Arrancar
+Se já tiveres a pasta noutro sítio, move-a e muda-lhe o nome de uma vez:
 
-Abre a pasta `C:\esDEV\crm` no Explorador e faz **duplo clique em `esdev-crm.bat`**.
+```powershell
+Move-Item "C:\esDEV\crm" "$env:USERPROFILE\Documents\esDEVCRM"
+```
+
+## 4. Instalar e arrancar
+
+Corre uma vez, dentro da pasta:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\instalar.ps1
+```
+
+Instala as dependências, compila e cria os atalhos **esDEV CRM** no Ambiente de Trabalho e
+no menu Iniciar. Depois disso basta o atalho.
+
+Em alternativa, abre a pasta no Explorador e faz **duplo clique em `esdev-crm.bat`**.
 
 Na primeira vez ele instala as dependências e compila a aplicação (1 a 3 minutos, com
 mensagens no ecrã). Nas vezes seguintes arranca em poucos segundos. Depois:
@@ -62,14 +89,11 @@ mensagens no ecrã). Nas vezes seguintes arranca em poucos segundos. Depois:
 - Fica uma janela de consola minimizada chamada **esDEV CRM (servidor)**. É o motor. Fecha
   essa janela quando quiseres desligar o CRM.
 
-### Pôr no menu Iniciar e na barra de tarefas
+### Afixar na barra de tarefas
 
-1. Clica com o botão direito em `esdev-crm.bat` → **Mostrar mais opções** → **Enviar para**
-   → **Ambiente de trabalho (criar atalho)**.
-2. No atalho criado, botão direito → **Propriedades** → **Mudar ícone** e escolhe um ícone
-   à tua escolha. Muda também o nome para `esDEV CRM`.
-3. Botão direito no atalho → **Afixar em Iniciar** (e, se quiseres, arrasta-o para a barra
-   de tarefas).
+O `instalar.ps1` já cria os atalhos. Para os afixar: botão direito no atalho **esDEV CRM** →
+**Afixar em Iniciar**, ou arrasta-o para a barra de tarefas. Para mudar o ícone: botão
+direito → **Propriedades** → **Mudar ícone**.
 
 Se preferires que arranque sozinho quando ligas o PC: pressiona `Win + R`, escreve
 `shell:startup`, e copia o atalho para essa pasta.
@@ -86,7 +110,7 @@ Tudo — leads, briefings, análises, propostas, projetos, faturas, contratos �
 ficheiro:
 
 ```
-C:\esDEV\crm\data\esdev.db
+C:\Users\eduar\Documents\esDEVCRM\data\esdev.db
 ```
 
 **Cópia de segurança:** copia esse ficheiro. É o sistema todo. Duas formas:
@@ -96,7 +120,7 @@ C:\esDEV\crm\data\esdev.db
   no Agendador de Tarefas do Windows.
 
 ```bat
-copy /Y "C:\esDEV\crm\data\esdev.db" "C:\Users\eduar\OneDrive\Backups\esdev-%date:~-4%%date:~3,2%%date:~0,2%.db"
+copy /Y "%USERPROFILE%\Documents\esDEVCRM\data\esdev.db" "C:\Users\eduar\OneDrive\Backups\esdev-%date:~-4%%date:~3,2%%date:~0,2%.db"
 ```
 
 Isto guarda uma cópia datada na nuvem sem a base de dados de trabalho estar dentro do
@@ -127,7 +151,7 @@ autenticação: qualquer pessoa com o endereço veria os teus dados.
 Se clonaste com Git:
 
 ```powershell
-cd C:\esDEV\crm
+cd "$env:USERPROFILE\Documents\esDEVCRM"
 git pull
 npm install
 npm run build
@@ -156,4 +180,5 @@ chmod +x esdev-crm.sh
 ./esdev-crm.sh
 ```
 
-Guarda a pasta em `~/esdev/crm` e faz backup de `~/esdev/crm/data/esdev.db` da mesma forma.
+Guarda a pasta em `~/Documents/esDEVCRM` e faz backup de `~/Documents/esDEVCRM/data/esdev.db`
+da mesma forma.
