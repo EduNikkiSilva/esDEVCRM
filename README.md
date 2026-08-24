@@ -90,6 +90,68 @@ Transversal à app:
    checklist de entrega.
 7. Entregue → o contrato de manutenção passa a contar na receita recorrente.
 
+## Acesso online e autenticação
+
+O CRM corre num endereço público protegido por **login com a conta Google**, restrito aos
+endereços de `EMAILS_PERMITIDOS` (por omissão `geral@esdev.pt`). Não há utilizadores nem
+passwords para memorizar, e a sessão dura 30 dias por dispositivo.
+
+Um URL secreto **não** é proteção: o `proxy.ts` fecha a aplicação inteira antes de qualquer
+página ser servida. Quem não tem sessão vê o ecrã de entrada e mais nada — nem os nomes dos
+módulos.
+
+```
+GOOGLE_CLIENT_ID=...           # Google Cloud → Credenciais → ID de cliente OAuth (Web)
+GOOGLE_CLIENT_SECRET=...
+SESSAO_SECRET=...              # node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+EMAILS_PERMITIDOS=geral@esdev.pt
+```
+
+Enquanto estas variáveis não existirem, a aplicação fica aberta — é o modo local — e a barra
+lateral mostra um aviso a dizer que não deve ser publicada assim.
+
+Para verificar a proteção: `npm run teste-autenticacao`. Arranca o servidor com credenciais de
+teste e confirma que todas as páginas ficam fechadas sem sessão, que um cookie assinado com
+outro segredo é recusado, que um cookie expirado é recusado e que a assinatura é verificada.
+
+### Endereço próprio
+
+O CRM é publicado como projeto próprio na Vercel, em `https://crm.esdev.pt` (ou no endereço
+`*.vercel.app` atribuído automaticamente). O guia passo a passo está em
+**[PUBLICAR.md](PUBLICAR.md)**.
+
+Se algum dia quiseres servi-lo debaixo de um caminho do site principal — `www.esdev.pt/dev` —
+o suporte está feito: compila-se com `ESDEV_BASE_PATH=/dev` e o projeto do site reescreve
+`/dev/:caminho*` para o projeto do CRM. Não é o caminho recomendado, porque obriga a
+republicar o site a cada alteração do CRM.
+
+## Base de dados: local ou alojada
+
+A camada de dados tem dois motores, escolhidos por uma variável de ambiente:
+
+| `DATABASE_URL` | Motor | Onde faz sentido |
+|---|---|---|
+| ausente | SQLite embutido no Node, ficheiro `data/esdev.db` | uso local, sem internet |
+| definido | PostgreSQL | produção na Vercel (Neon) |
+
+O SQL é escrito uma única vez: os marcadores são sempre `?` (o adaptador de Postgres traduz
+para `$1, $2, …`), os INSERT recebem `RETURNING id` automaticamente, e as poucas expressões
+que divergem entre motores estão isoladas em `AGORA`, `HOJE`, `mesDe` e `semAcento` em
+`src/lib/db.ts`. As datas são guardadas como texto ISO nos dois motores, para o comportamento
+ser idêntico.
+
+Ambos os caminhos são testados: as verificações de interface correm contra SQLite e contra um
+PostgreSQL real.
+
+```bash
+# local (SQLite)
+npm run dados-exemplo && npm run build && npm start
+
+# contra Postgres
+DATABASE_URL="postgresql://utilizador:senha@servidor/base" npm run dados-exemplo
+DATABASE_URL="postgresql://utilizador:senha@servidor/base" npm start
+```
+
 ## Como trabalhamos (regras de colaboração)
 
 A `main` é tua. Eu nunca lhe faço push.
