@@ -1,12 +1,10 @@
 "use server";
 
-import fs from "node:fs";
-import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { AGORA, HOJE, executa, primeiro } from "@/lib/db";
+import { AGORA, HOJE, executa, insere, primeiro } from "@/lib/db";
 import { PLANOS_PAGAMENTO } from "@/lib/dominio";
-import { pastaDados } from "@/lib/logo";
+import { CHAVE } from "@/lib/logo";
 import { calcularPreco, type InputsCalculadora } from "@/lib/pricing";
 
 const texto = (fd: FormData, campo: string) => {
@@ -27,7 +25,7 @@ function refrescar(...caminhos: string[]) {
 // --- Leads -------------------------------------------------------------------
 
 export async function criarLead(fd: FormData) {
-  const res = await executa(
+  const res = await insere(
     `INSERT INTO leads (empresa, contacto_nome, email, telefone, origem, fase, tipo_solucao,
                         orcamento_indicado, valor_estimado, notas)
      VALUES (?,?,?,?,?,?,?,?,?,?)`,
@@ -97,7 +95,7 @@ export async function guardarAnalise(
   opcoes: { leadId?: number | null; titulo?: string } = {},
 ) {
   const r = calcularPreco(inputs);
-  const res = await executa(
+  const res = await insere(
     `INSERT INTO analises (lead_id, titulo, inputs, preco_minimo, preco_recomendado, preco_premium,
                            mensalidade, plano_manutencao, horas_estimadas, valor_hora)
      VALUES (?,?,?,?,?,?,?,?,?,?)`,
@@ -187,7 +185,7 @@ export async function converterEmProjeto(fd: FormData) {
 
   let clienteId = lead.cliente_id;
   if (!clienteId) {
-    const res = await executa(
+    const res = await insere(
       "INSERT INTO clientes (empresa, contacto_nome, email, telefone) VALUES (?,?,?,?)",
       lead.empresa,
       lead.contacto_nome,
@@ -199,7 +197,7 @@ export async function converterEmProjeto(fd: FormData) {
   }
 
   const preco = numero(fd, "preco") || lead.valor_estimado;
-  const projeto = await executa(
+  const projeto = await insere(
     `INSERT INTO projetos (cliente_id, lead_id, nome, pacote, estado, preco, custos_externos,
                            horas_estimadas, inicio, entrega_prevista, checklist, notas)
      VALUES (?,?,?,?,?,?,?,?,?,?,'[]',?)`,
@@ -422,43 +420,31 @@ export async function apagarManutencao(fd: FormData) {
 
 // --- Identidade / logótipo ---------------------------------------------------
 
-const TIPOS_LOGO: Record<string, string> = {
-  "image/svg+xml": "svg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/jpeg": "jpg",
-};
+const TIPOS_LOGO = ["image/svg+xml", "image/png", "image/webp", "image/jpeg"];
 
-const BASE_LOGO = (variante: string) => (variante === "escuro" ? "logo-branco" : "logo");
-
-/** Guarda o logótipo enviado junto da base de dados, para entrar nos backups. */
+/** Guarda o logótipo na base de dados, para funcionar em alojamento sem disco. */
 export async function guardarLogotipo(fd: FormData) {
   const ficheiro = fd.get("ficheiro");
   if (!(ficheiro instanceof File) || ficheiro.size === 0) return;
   if (ficheiro.size > 3 * 1024 * 1024) return;
+  if (!TIPOS_LOGO.includes(ficheiro.type)) return;
 
-  const extensao = TIPOS_LOGO[ficheiro.type];
-  if (!extensao) return;
+  const chave = CHAVE[String(fd.get("variante")) === "escuro" ? "escuro" : "claro"];
+  const dados = Buffer.from(await ficheiro.arrayBuffer());
 
-  const base = BASE_LOGO(String(fd.get("variante")));
-  const pasta = pastaDados();
-  fs.mkdirSync(pasta, { recursive: true });
-  for (const ext of Object.values(TIPOS_LOGO)) {
-    const antigo = path.join(pasta, `${base}.${ext}`);
-    if (fs.existsSync(antigo)) fs.rmSync(antigo);
-  }
-  fs.writeFileSync(
-    path.join(pasta, `${base}.${extensao}`),
-    Buffer.from(await ficheiro.arrayBuffer()),
+  await executa(
+    `INSERT INTO ficheiros (chave, tipo, dados, atualizado_em) VALUES (?,?,?,${AGORA})
+     ON CONFLICT(chave) DO UPDATE
+       SET tipo=excluded.tipo, dados=excluded.dados, atualizado_em=excluded.atualizado_em`,
+    chave,
+    ficheiro.type,
+    dados,
   );
   revalidatePath("/", "layout");
 }
 
 export async function removerLogotipo(fd: FormData) {
-  const base = BASE_LOGO(String(fd.get("variante")));
-  for (const ext of Object.values(TIPOS_LOGO)) {
-    const ficheiro = path.join(pastaDados(), `${base}.${ext}`);
-    if (fs.existsSync(ficheiro)) fs.rmSync(ficheiro);
-  }
+  const chave = CHAVE[String(fd.get("variante")) === "escuro" ? "escuro" : "claro"];
+  await executa("DELETE FROM ficheiros WHERE chave = ?", chave);
   revalidatePath("/", "layout");
 }

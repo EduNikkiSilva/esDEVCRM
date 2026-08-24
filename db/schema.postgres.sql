@@ -116,3 +116,10 @@ CREATE TABLE IF NOT EXISTS tarefas (
   prazo TEXT,
   criado_em TEXT NOT NULL DEFAULT (now()::text)
 );
+
+CREATE TABLE IF NOT EXISTS ficheiros (
+  chave TEXT PRIMARY KEY,
+  tipo TEXT NOT NULL,
+  dados BYTEA NOT NULL,
+  atualizado_em TEXT NOT NULL DEFAULT (now()::text)
+);

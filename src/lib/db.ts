@@ -15,12 +15,20 @@ import path from "node:path";
  * Todas as funções são assíncronas: o cliente de Postgres é sempre assíncrono e
  * ter uma única assinatura evita duas versões de cada consulta.
  */
-export const usaPostgres = Boolean(process.env.DATABASE_URL);
+/**
+ * As integrações de alojamento usam nomes diferentes para a mesma coisa: a Neon
+ * na Vercel define DATABASE_URL, a Supabase define POSTGRES_URL. Aceitamos os
+ * dois para não haver configuração silenciosamente ignorada.
+ */
+export const urlPostgres =
+  process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.POSTGRES_URL_NON_POOLING;
+
+export const usaPostgres = Boolean(urlPostgres);
 
 const caminho = process.env.ESDEV_DB ?? path.join(process.cwd(), "data", "esdev.db");
 
 export const caminhoBaseDados = usaPostgres
-  ? (process.env.DATABASE_URL ?? "").replace(/:[^:@/]+@/, ":•••@")
+  ? (urlPostgres ?? "").replace(/:[^:@/]+@/, ":•••@")
   : caminho;
 
 /** Expressões dependentes do motor, para o SQL das consultas ser único. */
@@ -65,24 +73,28 @@ const paraDolares = (sql: string) => {
   return sql.replace(/\?/g, () => `$${++n}`);
 };
 
-const precisaReturning = (sql: string) =>
-  /^\s*insert\s/i.test(sql) && !/returning/i.test(sql);
+
 
 async function pool(): Promise<Cliente> {
   if (!globalThis.__esdevPg) {
+    // Se a ligação falhar, a promessa rejeitada NÃO fica em cache: senão um erro
+    // de configuração continuava a dar erro depois de corrigido, até reiniciar.
     globalThis.__esdevPg = (async () => {
       const { Pool } = await import("pg");
       const p = new Pool({
-        connectionString: process.env.DATABASE_URL,
+        connectionString: urlPostgres,
         // Os fornecedores geridos (Neon, Supabase) exigem TLS.
-        ssl: /localhost|127\.0\.0\.1/.test(process.env.DATABASE_URL ?? "")
-          ? undefined
-          : { rejectUnauthorized: false },
+        ssl: /localhost|127\.0\.0\.1/.test(urlPostgres ?? "") ? undefined : { rejectUnauthorized: false },
+        // O pooler da Supabase em modo transação não gosta de muitas ligações
+        // paralelas por instância; cinco é folgado para um utilizador.
         max: 5,
       });
       await p.query(fs.readFileSync(path.join(process.cwd(), "db", "schema.postgres.sql"), "utf8"));
       return p as unknown as Cliente;
-    })();
+    })().catch((erro) => {
+      globalThis.__esdevPg = undefined;
+      throw erro;
+    });
   }
   return globalThis.__esdevPg;
 }
@@ -91,6 +103,14 @@ async function pool(): Promise<Cliente> {
 
 async function sqlite() {
   if (!globalThis.__esdevSqlite) {
+    // Em alojamento sem disco persistente (Vercel), o SQLite não serve para nada:
+    // o ficheiro seria apagado a cada publicação — e a pasta é só de leitura.
+    if (process.env.VERCEL) {
+      throw new Error(
+        "DATABASE_URL não está definida. Num alojamento sem disco persistente é obrigatória: " +
+          "cria a base de dados (Supabase ou Neon), define DATABASE_URL e republica.",
+      );
+    }
     const { DatabaseSync } = await import("node:sqlite");
     fs.mkdirSync(path.dirname(caminho), { recursive: true });
     const bd = new DatabaseSync(caminho);
@@ -130,8 +150,7 @@ export async function primeiro<T = Record<string, unknown>>(
 export async function executa(sql: string, ...params: unknown[]): Promise<Resultado> {
   const valores = normalizar(params);
   if (usaPostgres) {
-    const texto = precisaReturning(sql) ? `${sql} RETURNING id` : sql;
-    const { rows, rowCount } = await (await pool()).query(paraDolares(texto), valores);
+    const { rows, rowCount } = await (await pool()).query(paraDolares(sql), valores);
     return {
       changes: rowCount ?? 0,
       lastInsertRowid: Number((rows[0] as { id?: number } | undefined)?.id ?? 0),
@@ -139,4 +158,13 @@ export async function executa(sql: string, ...params: unknown[]): Promise<Result
   }
   const r = (await sqlite()).prepare(sql).run(...valores);
   return { changes: Number(r.changes), lastInsertRowid: r.lastInsertRowid };
+}
+
+/**
+ * INSERT cujo id gerado é necessário. Em Postgres acrescenta `RETURNING id`;
+ * é explícito de propósito, porque há tabelas sem coluna `id` (como `ficheiros`,
+ * cuja chave primária é o nome do ficheiro).
+ */
+export async function insere(sql: string, ...params: unknown[]): Promise<Resultado> {
+  return executa(usaPostgres && !/returning/i.test(sql) ? `${sql} RETURNING id` : sql, ...params);
 }

@@ -46,16 +46,27 @@ Isto tem de vir primeiro, porque o resto depende delas.
 3. **Deploy**. A primeira publicação vai correr; ignora-a por agora, ainda não tem base de
    dados nem login.
 
-## 3. Criar a base de dados
+## 3. Criar a base de dados (Supabase)
 
-1. No projeto → separador **Storage** → **Create Database** → **Neon** (Postgres) →
-   **Continue**.
-2. Região: **Europe (Frankfurt)** ou a mais próxima disponível. Plano gratuito serve.
-3. **Connect** ao projeto `esDEVCRM`, para os ambientes **Production**, **Preview** e
-   **Development**.
+1. [supabase.com](https://supabase.com) → **New project**:
+   - Name: `esdev-crm`
+   - Database Password: gera uma forte e **guarda-a** (vais precisar dela a seguir)
+   - Region: **Central EU (Frankfurt)** — a mais próxima de Portugal
+   - Plano **Free**
+2. Espera um ou dois minutos pelo aprovisionamento.
+3. No projeto Supabase → **Connect** (botão no topo) ou **Project Settings → Database** →
+   secção **Connection string** → separador **Transaction pooler** (porta **6543**).
+4. Copia o URI e substitui `[YOUR-PASSWORD]` pela password do passo 1. Deve ficar parecido com:
 
-Isto cria a variável `DATABASE_URL` sozinha. As tabelas são criadas na primeira ligação — não
-há migrações para correr.
+```
+postgresql://postgres.abcdefghijkl:A_TUA_PASSWORD@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?sslmode=require
+```
+
+**Usa o pooler em modo transação (6543), não a ligação direta (5432).** Em alojamento
+serverless cada pedido abre a sua própria ligação, e a ligação direta esgota o limite da
+Supabase rapidamente. O pooler existe precisamente para isto.
+
+As tabelas são criadas na primeira ligação — não há migrações para correr.
 
 ## 4. Definir as variáveis de ambiente
 
@@ -64,6 +75,7 @@ Projeto → **Settings** → **Environment Variables**. Acrescenta quatro, todas
 
 | Nome | Valor |
 |---|---|
+| `DATABASE_URL` | o URI do pooler da Supabase, do passo 3 |
 | `GOOGLE_CLIENT_ID` | o ID do cliente do passo 1 |
 | `GOOGLE_CLIENT_SECRET` | o segredo do cliente do passo 1 |
 | `SESSAO_SECRET` | uma cadeia aleatória longa (ver abaixo) |
@@ -98,7 +110,7 @@ tem de ser `https://crm.esdev.pt/api/auth/callback`, com `https` e sem barra no 
 ## Depois de estar no ar
 
 **Dados de exemplo.** Se quiseres ver o sistema preenchido antes de meteres clientes reais,
-no teu PC, com a `DATABASE_URL` da Neon (copia-a da Vercel em Storage → Neon → `.env.local`):
+no teu PC, com a `DATABASE_URL` da Supabase:
 
 ```powershell
 $env:DATABASE_URL="postgresql://..."
@@ -111,8 +123,8 @@ Para limpar tudo outra vez: `npm run limpar-dados -- --sim` com a mesma variáve
 guardar e partilhar** → **Instalar página como aplicação**. Fica com ícone e janela próprios,
 no computador e no telemóvel (no Android, *Adicionar ao ecrã principal*).
 
-**Cópias de segurança.** A Neon faz *point-in-time recovery* nos planos pagos; no gratuito, o
-histórico é curto. Uma exportação periódica não faz mal:
+**Cópias de segurança.** No plano gratuito da Supabase os backups automáticos são limitados.
+Uma exportação periódica não faz mal:
 
 ```powershell
 # precisa do pg_dump instalado (vem com o PostgreSQL)

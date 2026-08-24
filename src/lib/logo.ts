@@ -1,33 +1,47 @@
 import fs from "node:fs";
 import path from "node:path";
+import { consulta } from "@/lib/db";
 
 /**
- * O logótipo do utilizador é servido por `/api/logo/[variante]`, não como
- * ficheiro estático: o `next start` só serve o conteúdo de `public/` que existia
- * quando arrancou, e queremos que o upload apareça de imediato.
+ * O logótipo é guardado na base de dados, não no disco: em alojamento serverless
+ * o sistema de ficheiros é só de leitura e é descartado a cada publicação. Como
+ * bónus, o logótipo passa a viajar nas cópias de segurança da base de dados.
  *
- * Procura primeiro em `data/` (onde o upload é guardado, junto da base de dados
- * e por isso incluído nas cópias de segurança) e depois em `public/`, para quem
- * preferir copiar o ficheiro à mão.
+ * Continua a ser possível colocar ficheiros à mão em `public/logo.png` e
+ * `public/logo-branco.png` — servem de alternativa para quem preferir isso.
  */
-const EXTENSOES = ["svg", "png", "webp", "jpg", "jpeg"] as const;
-
 export const VARIANTES = ["claro", "escuro"] as const;
 export type Variante = (typeof VARIANTES)[number];
 
-const BASE: Record<Variante, string> = { claro: "logo", escuro: "logo-branco" };
+export const CHAVE: Record<Variante, string> = {
+  claro: "logo",
+  escuro: "logo-branco",
+};
 
-export function pastaDados() {
-  const bd = process.env.ESDEV_DB ?? path.join(process.cwd(), "data", "esdev.db");
-  return path.dirname(bd);
-}
+const EXTENSOES = ["svg", "png", "webp", "jpg", "jpeg"] as const;
 
-/** Caminho no disco do logótipo de uma variante, se existir. */
-export function ficheiroLogotipo(variante: Variante): string | null {
-  for (const pasta of [pastaDados(), path.join(process.cwd(), "public")]) {
-    for (const ext of EXTENSOES) {
-      const caminho = path.join(pasta, `${BASE[variante]}.${ext}`);
-      if (fs.existsSync(caminho)) return caminho;
+const TIPOS_POR_EXTENSAO: Record<string, string> = {
+  svg: "image/svg+xml",
+  png: "image/png",
+  webp: "image/webp",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+};
+
+export type Ficheiro = { tipo: string; dados: Uint8Array };
+
+/** Procura na base de dados e, em alternativa, num ficheiro colocado em public/. */
+export async function lerLogotipo(variante: Variante): Promise<Ficheiro | null> {
+  const linhas = await consulta<{ tipo: string; dados: Uint8Array }>(
+    "SELECT tipo, dados FROM ficheiros WHERE chave = ?",
+    CHAVE[variante],
+  );
+  if (linhas[0]) return { tipo: linhas[0].tipo, dados: linhas[0].dados };
+
+  for (const ext of EXTENSOES) {
+    const caminho = path.join(process.cwd(), "public", `${CHAVE[variante]}.${ext}`);
+    if (fs.existsSync(caminho)) {
+      return { tipo: TIPOS_POR_EXTENSAO[ext], dados: fs.readFileSync(caminho) };
     }
   }
   return null;
@@ -36,19 +50,28 @@ export function ficheiroLogotipo(variante: Variante): string | null {
 export type Logotipos = {
   claro: string | null;
   escuro: string | null;
-  /** Só preenchido quando existe um ficheiro dedicado a fundos escuros. */
+  /** Só preenchido quando existe uma versão dedicada a fundos escuros. */
   escuroProprio: string | null;
 };
 
-function url(variante: Variante): string | null {
-  const ficheiro = ficheiroLogotipo(variante);
-  if (!ficheiro) return null;
-  // O sufixo evita que o browser mostre um logótipo antigo em cache.
-  return `/api/logo/${variante}?v=${Math.round(fs.statSync(ficheiro).mtimeMs)}`;
-}
+/** URLs a usar nas imagens, com sufixo que evita cache desatualizada. */
+export async function logotipos(): Promise<Logotipos> {
+  const guardados = await consulta<{ chave: string; atualizado_em: string }>(
+    "SELECT chave, atualizado_em FROM ficheiros WHERE chave = ? OR chave = ?",
+    CHAVE.claro,
+    CHAVE.escuro,
+  );
 
-export function logotipos(): Logotipos {
-  const claro = url("claro");
-  const escuroProprio = url("escuro");
+  const url = async (variante: Variante) => {
+    const guardado = guardados.find((g) => g.chave === CHAVE[variante]);
+    if (guardado) {
+      const versao = Date.parse(guardado.atualizado_em) || guardado.atualizado_em.length;
+      return `/api/logo/${variante}?v=${versao}`;
+    }
+    return (await lerLogotipo(variante)) ? `/api/logo/${variante}` : null;
+  };
+
+  const claro = await url("claro");
+  const escuroProprio = await url("escuro");
   return { claro, escuro: escuroProprio ?? claro, escuroProprio };
 }

@@ -36,7 +36,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full">
         <ProvedorTema>
-          <Estrutura logos={logotipos()} sessao={sessao} protegido={protegido}>
+          <Estrutura logos={await logotipos()} sessao={sessao} protegido={protegido}>
             {children}
           </Estrutura>
           <Toaster position="bottom-right" />

@@ -29,8 +29,8 @@ const VARIANTES = [
   },
 ] as const;
 
-export default function DefinicoesPage() {
-  const logos = logotipos();
+export default async function DefinicoesPage() {
+  const logos = await logotipos();
 
   return (
     <>
@@ -113,8 +113,8 @@ export default function DefinicoesPage() {
             faturas e contratos. É a tua cópia de segurança.
           </p>
           <p>
-            Os logótipos que carregas ficam na mesma pasta da base de dados, por isso entram nas
-            tuas cópias de segurança. Em alternativa podes copiá-los para a pasta{" "}
+            Os logótipos que carregas ficam guardados na própria base de dados, por isso entram
+            nas tuas cópias de segurança. Em alternativa podes colocá-los na pasta{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs">public</code> do projeto, com
             os nomes{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs">logo.png</code> e{" "}

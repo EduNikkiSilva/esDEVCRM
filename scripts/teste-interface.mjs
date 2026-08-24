@@ -149,6 +149,40 @@ if (arrastou) {
   registar(`Nova fase (${destino}) persiste na base de dados`, naColuna);
 }
 
+// --- Logótipo: guardar e remover ------------------------------------------
+const imagemTeste = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==",
+  "base64",
+);
+await pagina.goto(`${url}/definicoes`, { waitUntil: "networkidle" });
+await pagina.locator("#ficheiro-escuro").setInputFiles({
+  name: "logo.png",
+  mimeType: "image/png",
+  buffer: imagemTeste,
+});
+await pagina
+  .getByRole("button", { name: "Usar este ficheiro" })
+  .nth(1)
+  .click();
+await pagina.waitForTimeout(2000);
+const logo = pagina.locator('aside img[alt="esDEV"]').first();
+const logoSrc = await logo.getAttribute("src").catch(() => null);
+registar("Logótipo carregado aparece na barra lateral", Boolean(logoSrc), logoSrc ?? "sem imagem");
+registar(
+  "Imagem do logótipo é servida",
+  await logo.evaluate((el) => el.naturalWidth > 0).catch(() => false),
+);
+
+await pagina
+  .getByRole("button", { name: /Remover e voltar ao vetor/ })
+  .first()
+  .click();
+await pagina.waitForTimeout(1500);
+registar(
+  "Remover o logótipo volta à versão vetorial",
+  (await pagina.locator('aside svg[aria-label*="esDEV"]').count()) > 0,
+);
+
 await pagina.screenshot({ path: "/tmp/crm-claro.png", fullPage: false });
 await pagina.getByRole("button", { name: "Tema Escuro" }).click();
 await pagina.waitForTimeout(500);

@@ -6,7 +6,9 @@ import fs from "node:fs";
 import path from "node:path";
 
 const raiz = process.cwd();
-export const usaPostgres = Boolean(process.env.DATABASE_URL);
+export const urlPostgres =
+  process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.POSTGRES_URL_NON_POOLING;
+export const usaPostgres = Boolean(urlPostgres);
 
 const paraDolares = (sql) => {
   let n = 0;
@@ -19,17 +21,16 @@ export async function abrir() {
   if (usaPostgres) {
     const { Pool } = await import("pg");
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: /localhost|127\.0\.0\.1/.test(process.env.DATABASE_URL)
-        ? undefined
-        : { rejectUnauthorized: false },
+      connectionString: urlPostgres,
+      ssl: /localhost|127\.0\.0\.1/.test(urlPostgres) ? undefined : { rejectUnauthorized: false },
     });
     await pool.query(fs.readFileSync(path.join(raiz, "db", "schema.postgres.sql"), "utf8"));
 
     return {
-      etiqueta: process.env.DATABASE_URL.replace(/:[^:@/]+@/, ":•••@"),
+      etiqueta: urlPostgres.replace(/:[^:@/]+@/, ":•••@"),
       consulta: async (sql, ...p) => (await pool.query(paraDolares(sql), p)).rows,
       executa: async (sql, ...p) => {
+        // Os scripts inserem sempre em tabelas com coluna id.
         const texto = precisaReturning(sql) ? `${sql} RETURNING id` : sql;
         const r = await pool.query(paraDolares(texto), p);
         return { lastInsertRowid: r.rows[0]?.id ?? 0, changes: r.rowCount ?? 0 };
