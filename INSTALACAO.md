@@ -126,8 +126,11 @@ ficheiro:
 C:\Users\eduar\Documents\esDEVCRM\data\esdev.db
 ```
 
-**Cópia de segurança:** copia esse ficheiro. É o sistema todo. Duas formas:
+**Cópia de segurança:** duas formas (faz as duas se puderes):
 
+- No CRM: **Definições → Exportar tudo (JSON)** — inclui tabelas, logótipos e documentos
+  anexados. Guarda o ficheiro fora deste computador (Drive, OneDrive, pen), pelo menos
+  uma vez por semana.
 - Manual, antes de mexidas grandes: copia `data\esdev.db` para onde guardas backups.
 - Automática, uma vez por dia: cria um ficheiro `backup.bat` com a linha abaixo e agenda-o
   no Agendador de Tarefas do Windows.

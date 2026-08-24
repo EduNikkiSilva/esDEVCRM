@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BriefingForm } from "@/components/briefing-form";
 import { CalculadoraPrecos } from "@/components/calculadora-precos";
+import { FormularioAcao } from "@/components/formulario-acao";
 import { TimelineAtividades } from "@/components/timeline-atividades";
 import { Campo, CampoSelect, PageHeader, Vazio } from "@/components/ui-kit";
 import {
@@ -256,7 +257,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                       <p className="mb-4 text-xs text-muted-foreground">
                         + {eur(ultima.mensalidade)}/mês de manutenção
                       </p>
-                      <form action={criarProposta} className="space-y-3">
+                      <FormularioAcao action={criarProposta} className="space-y-3" sucesso="Proposta criada">
                         <input type="hidden" name="lead_id" value={lead.id} />
                         <input type="hidden" name="analise_id" value={ultima.id} />
                         <input type="hidden" name="nivel" value={nivel.id} />
@@ -303,7 +304,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
                         <Button type="submit" variant={nivel.id === "BUSINESS" ? "default" : "outline"} className="w-full">
                           Criar proposta {nivel.nome}
                         </Button>
-                      </form>
+                      </FormularioAcao>
                     </CardContent>
                   </Card>
                 );

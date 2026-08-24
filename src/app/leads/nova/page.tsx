@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FormularioAcao } from "@/components/formulario-acao";
 import { Campo, CampoSelect, PageHeader } from "@/components/ui-kit";
 import { criarLead } from "@/lib/actions";
 import { hoje } from "@/lib/datas";
@@ -15,7 +16,7 @@ export default function NovaLeadPage() {
       />
       <Card className="max-w-3xl">
         <CardContent>
-          <form action={criarLead} className="grid gap-4 sm:grid-cols-2">
+          <FormularioAcao action={criarLead} className="grid gap-4 sm:grid-cols-2">
             <Campo nome="empresa" label="Empresa / Nome" obrigatorio placeholder="Remodelações Silva" />
             <Campo nome="contacto_nome" label="Pessoa de contacto" />
             <Campo nome="email" label="Email" tipo="email" />
@@ -57,7 +58,7 @@ export default function NovaLeadPage() {
                 <Link href="/leads">Cancelar</Link>
               </Button>
             </div>
-          </form>
+          </FormularioAcao>
         </CardContent>
       </Card>
     </>

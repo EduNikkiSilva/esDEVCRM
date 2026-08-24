@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { FormularioAcao } from "@/components/formulario-acao";
 import { Campo, PageHeader, Stat, Vazio } from "@/components/ui-kit";
 import { guardarCliente } from "@/lib/actions";
 import { data, eur } from "@/lib/format";
@@ -115,7 +116,7 @@ export default async function ClientesPage() {
             <CardTitle className="text-base">Novo cliente</CardTitle>
           </CardHeader>
           <CardContent>
-            <form action={guardarCliente} className="grid gap-3">
+            <FormularioAcao action={guardarCliente} className="grid gap-3" sucesso="Cliente criado">
               <Campo nome="empresa" label="Empresa" obrigatorio />
               <Campo nome="nif" label="NIF" />
               <Campo nome="contacto_nome" label="Pessoa de contacto" />
@@ -124,7 +125,7 @@ export default async function ClientesPage() {
               <Campo nome="telefone" label="Telefone" />
               <Campo nome="website" label="Website atual" />
               <Button type="submit">Adicionar</Button>
-            </form>
+            </FormularioAcao>
           </CardContent>
         </Card>
       </div>

@@ -60,8 +60,12 @@ export function CalculadoraPrecos({
 
   const guardar = () =>
     iniciar(async () => {
-      await guardarAnalise(inputs, { leadId, titulo: titulo ?? r.pacote.nome });
-      toast.success("Análise guardada", {
+      const rAcao = await guardarAnalise(inputs, { leadId, titulo: titulo ?? r.pacote.nome });
+      if (!rAcao.ok) {
+        toast.error(rAcao.erro);
+        return;
+      }
+      toast.success(rAcao.mensagem ?? "Análise guardada", {
         description: leadId
           ? "O valor estimado da lead foi atualizado com o preço recomendado."
           : "Disponível no histórico de análises.",

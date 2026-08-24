@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Plus, Star, Trash2, UserPlus } from "lucide-react";
+import { Download, Plus, Star, Trash2, UserPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FormularioAcao } from "@/components/formulario-acao";
 import { TimelineAtividades } from "@/components/timeline-atividades";
 import { Campo, CampoSelect, PageHeader, Stat } from "@/components/ui-kit";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   apagarCliente,
   apagarContacto,
@@ -137,7 +140,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
                 <CardTitle className="text-base">Dados de faturação</CardTitle>
               </CardHeader>
               <CardContent>
-                <form action={guardarCliente} className="grid gap-3">
+                <FormularioAcao action={guardarCliente} className="grid gap-3" sucesso="Cliente atualizado">
                   <input type="hidden" name="id" value={cliente.id} />
                   <Campo nome="empresa" label="Empresa" valor={cliente.empresa} obrigatorio />
                   <Campo nome="nif" label="NIF" valor={cliente.nif} />
@@ -152,7 +155,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
                   <Campo nome="website" label="Website" valor={cliente.website} />
                   <Campo nome="notas" label="Notas" area valor={cliente.notas} />
                   <Button type="submit">Guardar</Button>
-                </form>
+                </FormularioAcao>
                 <form action={apagarCliente} className="mt-4">
                   <input type="hidden" name="id" value={cliente.id} />
                   <Button type="submit" variant="ghost" size="sm" className="text-destructive">
@@ -483,7 +486,8 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
             <CardHeader>
               <CardTitle className="text-base">Contratos</CardTitle>
               <p className="text-xs text-muted-foreground">
-                Um projeto relevante não deve começar antes de o contrato estar assinado.
+                Um projeto relevante não deve começar antes de o contrato estar assinado. Os PDFs
+                ficam na base de dados (viajam no backup JSON).
               </p>
             </CardHeader>
             <CardContent>
@@ -500,7 +504,18 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
                           {c.ficheiro ? ` · ${c.ficheiro}` : ""}
                         </p>
                       </div>
-                      <form action={guardarContrato} className="flex items-center gap-2">
+                      {c.ficheiro ? (
+                        <Button asChild size="sm" variant="outline">
+                          <a href={`/api/documentos/${c.id}`}>
+                            <Download className="size-4" /> Descarregar
+                          </a>
+                        </Button>
+                      ) : null}
+                      <FormularioAcao
+                        action={guardarContrato}
+                        className="flex flex-wrap items-center gap-2"
+                        sucesso="Contrato atualizado"
+                      >
                         <input type="hidden" name="id" value={c.id} />
                         <input type="hidden" name="cliente_id" value={cliente.id} />
                         <input type="hidden" name="titulo" value={c.titulo} />
@@ -519,24 +534,34 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
                             </option>
                           ))}
                         </select>
+                        <Input
+                          name="anexo"
+                          type="file"
+                          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
+                          className="h-8 max-w-[14rem] text-xs"
+                        />
                         <Button type="submit" size="sm" variant="outline">
                           Atualizar
                         </Button>
-                      </form>
-                      <form action={apagarContrato}>
+                      </FormularioAcao>
+                      <FormularioAcao action={apagarContrato} sucesso="Contrato apagado">
                         <input type="hidden" name="id" value={c.id} />
                         <input type="hidden" name="cliente_id" value={cliente.id} />
                         <Button type="submit" size="sm" variant="ghost" className="text-destructive">
                           <Trash2 className="size-4" />
                         </Button>
-                      </form>
+                      </FormularioAcao>
                     </li>
                   ))}
                 </ul>
               )}
 
               <Separator className="my-4" />
-              <form action={guardarContrato} className="grid gap-3 sm:grid-cols-4">
+              <FormularioAcao
+                action={guardarContrato}
+                className="grid gap-3 sm:grid-cols-4"
+                sucesso="Contrato registado"
+              >
                 <input type="hidden" name="cliente_id" value={cliente.id} />
                 <Campo
                   nome="titulo"
@@ -547,9 +572,18 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
                 />
                 <CampoSelect nome="estado" label="Estado" opcoes={ESTADOS_CONTRATO} />
                 <Campo nome="data" label="Data" tipo="date" />
+                <div className="sm:col-span-2 space-y-1.5">
+                  <Label htmlFor="anexo-novo">Documento (PDF / Word / imagem)</Label>
+                  <Input
+                    id="anexo-novo"
+                    name="anexo"
+                    type="file"
+                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp"
+                  />
+                </div>
                 <Campo
                   nome="ficheiro"
-                  label="Ficheiro / localização"
+                  label="Ou localização externa"
                   placeholder="Drive › Clientes › contrato.pdf"
                   className="sm:col-span-2"
                 />
@@ -558,7 +592,7 @@ export default async function ClientePage({ params }: { params: Promise<{ id: st
                     <Plus className="size-4" /> Registar contrato
                   </Button>
                 </div>
-              </form>
+              </FormularioAcao>
             </CardContent>
           </Card>
         </TabsContent>

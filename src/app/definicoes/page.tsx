@@ -1,4 +1,4 @@
-import { ShieldCheck, Trash2, Upload } from "lucide-react";
+import { Download, ShieldCheck, Trash2, Upload } from "lucide-react";
 import { LogoEsdev } from "@/components/logotipo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -162,24 +162,26 @@ export default async function DefinicoesPage() {
 
       <Card className="mt-4">
         <CardHeader>
-          <CardTitle className="text-sm">Onde estão os teus dados</CardTitle>
+          <CardTitle className="text-sm">Cópia de segurança</CardTitle>
+          <p className="text-xs text-muted-foreground">
+            O ponto mais frágil a solo: um disco a falhar ou um ficheiro apagado perde leads,
+            propostas e faturas. Exporta com regularidade — pelo menos uma vez por semana.
+          </p>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
           <p>
             Base de dados:{" "}
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{caminhoBaseDados}</code>
           </p>
-          <p>
-            Copiar este ficheiro é copiar o CRM inteiro — leads, briefings, propostas, projetos,
-            faturas e contratos. É a tua cópia de segurança.
-          </p>
-          <p>
-            Os logótipos que carregas ficam guardados na própria base de dados, por isso entram
-            nas tuas cópias de segurança. Em alternativa podes colocá-los na pasta{" "}
-            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">public</code> do projeto, com
-            os nomes{" "}
-            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">logo.png</code> e{" "}
-            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">logo-branco.png</code>.
+          <Button asChild>
+            <a href="/api/backup" download>
+              <Download className="size-4" /> Exportar tudo (JSON)
+            </a>
+          </Button>
+          <p className="text-xs">
+            O ficheiro inclui tabelas de negócio, logótipos e documentos anexados. Guarda-o fora
+            deste computador (Drive, OneDrive, pen). Em SQLite local, podes ainda copiar o
+            ficheiro <code className="rounded bg-muted px-1 text-[11px]">.db</code> à mão.
           </p>
         </CardContent>
       </Card>

@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { FormularioAcao } from "@/components/formulario-acao";
 import { Campo, CampoSelect, PageHeader, Stat, Vazio } from "@/components/ui-kit";
 import { alternarPagamento, apagarFatura, criarFatura, emitirFatura } from "@/lib/actions";
 import { diasAte, somarDias } from "@/lib/datas";
@@ -215,7 +216,7 @@ export default async function FaturasPage({
             <CardTitle className="text-base">Nova fatura</CardTitle>
           </CardHeader>
           <CardContent>
-            <form action={criarFatura} className="grid gap-3">
+            <FormularioAcao action={criarFatura} className="grid gap-3" sucesso="Fatura criada">
               <Campo nome="descricao" label="Descrição" obrigatorio />
               <CampoSelect nome="tipo" label="Tipo" opcoes={TIPOS_FATURA} />
               <Campo nome="valor" label="Valor (€)" tipo="number" step="10" />
@@ -240,7 +241,7 @@ export default async function FaturasPage({
               />
               <CampoSelect nome="estado" label="Estado" opcoes={["Pendente", "Paga"]} />
               <Button type="submit">Registar</Button>
-            </form>
+            </FormularioAcao>
           </CardContent>
         </Card>
       </div>

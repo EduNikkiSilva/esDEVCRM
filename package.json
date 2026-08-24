@@ -11,6 +11,7 @@
     "calculadora-excel": "python scripts/gerar_calculadora.py Calculadora_Precos_esDEV.xlsx",
     "teste-interface": "node scripts/teste-interface.mjs",
     "teste-autenticacao": "node scripts/teste-autenticacao.mjs",
+    "teste-precos": "node --experimental-strip-types --no-warnings scripts/teste-precos.ts",
     "limpar-dados": "node scripts/limpar-dados.mjs"
   },
   "dependencies": {
@@ -28,7 +29,8 @@
     "shadcn": "^4.19.0",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.6.0",
-    "tw-animate-css": "^1.4.0"
+    "tw-animate-css": "^1.4.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

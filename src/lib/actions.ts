@@ -7,6 +7,20 @@ import { AGORA, HOJE, executa, insere, primeiro } from "@/lib/db";
 import { MESES_CICLO, PLANOS_PAGAMENTO, type Periodicidade } from "@/lib/dominio";
 import { CHAVE } from "@/lib/logo";
 import { calcularPreco, type InputsCalculadora } from "@/lib/pricing";
+import {
+  esquemaAnalise,
+  esquemaCliente,
+  esquemaContrato,
+  esquemaFatura,
+  esquemaLead,
+  esquemaProposta,
+  falha,
+  ok,
+  validarFormulario,
+  type ResultadoAcao,
+} from "@/lib/validacao";
+
+export type { ResultadoAcao };
 
 const texto = (fd: FormData, campo: string) => {
   const v = fd.get(campo);
@@ -25,39 +39,48 @@ function refrescar(...caminhos: string[]) {
 
 // --- Leads -------------------------------------------------------------------
 
-export async function criarLead(fd: FormData) {
-  const res = await insere(
-    `INSERT INTO leads (empresa, contacto_nome, email, telefone, origem, responsavel, fase,
-                        tipo_solucao, orcamento_indicado, valor_estimado, notas)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
-    texto(fd, "empresa") ?? "Sem nome",
-    texto(fd, "contacto_nome"),
-    texto(fd, "email"),
-    texto(fd, "telefone"),
-    texto(fd, "origem"),
-    texto(fd, "responsavel"),
-    texto(fd, "fase") ?? "Novo Lead",
-    texto(fd, "tipo_solucao"),
-    texto(fd, "orcamento_indicado"),
-    numero(fd, "valor_estimado"),
-    texto(fd, "notas"),
-  );
-  const leadId = Number(res.lastInsertRowid);
+export async function criarLead(fd: FormData): Promise<ResultadoAcao> {
+  const v = validarFormulario(esquemaLead, fd);
+  if (!v.ok) return falha(v.erro);
 
-  // Um lead sem próxima ação marcada perde-se; a primeira é criada logo.
-  const primeiroContacto = texto(fd, "primeiro_contacto");
-  if (primeiroContacto) {
-    await executa(
-      "INSERT INTO atividades (lead_id, tipo, titulo, data) VALUES (?,?,?,?)",
-      leadId,
-      "Contacto",
-      "Primeiro contacto",
-      primeiroContacto,
+  try {
+    const d = v.dados;
+    const res = await insere(
+      `INSERT INTO leads (empresa, contacto_nome, email, telefone, origem, responsavel, fase,
+                          tipo_solucao, orcamento_indicado, valor_estimado, notas)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      d.empresa,
+      d.contacto_nome,
+      d.email,
+      d.telefone,
+      d.origem,
+      d.responsavel,
+      d.fase,
+      d.tipo_solucao,
+      d.orcamento_indicado,
+      d.valor_estimado,
+      d.notas,
     );
-  }
+    const leadId = Number(res.lastInsertRowid);
 
-  refrescar("/", "/leads");
-  redirect(`/leads/${leadId}`);
+    // Um lead sem próxima ação marcada perde-se; a primeira é criada logo.
+    if (d.primeiro_contacto) {
+      await executa(
+        "INSERT INTO atividades (lead_id, tipo, titulo, data) VALUES (?,?,?,?)",
+        leadId,
+        "Contacto",
+        "Primeiro contacto",
+        d.primeiro_contacto,
+      );
+    }
+
+    refrescar("/", "/leads");
+    redirect(`/leads/${leadId}`);
+  } catch (e) {
+    const digest = typeof e === "object" && e && "digest" in e ? String((e as { digest?: string }).digest) : "";
+    if (digest.startsWith("NEXT_REDIRECT")) throw e;
+    return falha("Não foi possível criar a lead.");
+  }
 }
 
 export async function atualizarLead(fd: FormData) {
@@ -317,40 +340,91 @@ export async function migrarContactoDoCliente(fd: FormData) {
 
 // --- Contratos ---------------------------------------------------------------
 
-export async function guardarContrato(fd: FormData) {
-  const id = numero(fd, "id");
-  const clienteId = numero(fd, "cliente_id") || null;
-  const campos = [
-    clienteId,
-    numero(fd, "proposta_id") || null,
-    numero(fd, "projeto_id") || null,
-    texto(fd, "titulo") ?? "Contrato",
-    texto(fd, "estado") ?? "Pendente",
-    texto(fd, "data"),
-    texto(fd, "ficheiro"),
-    texto(fd, "notas"),
-  ];
-  if (id) {
-    await executa(
-      `UPDATE contratos SET cliente_id=?, proposta_id=?, projeto_id=?, titulo=?, estado=?,
-        data=?, ficheiro=?, notas=? WHERE id=?`,
-      ...campos,
-      id,
-    );
-  } else {
-    await executa(
-      `INSERT INTO contratos (cliente_id, proposta_id, projeto_id, titulo, estado, data, ficheiro, notas)
-       VALUES (?,?,?,?,?,?,?,?)`,
-      ...campos,
-    );
+export async function guardarContrato(fd: FormData): Promise<ResultadoAcao> {
+  const v = validarFormulario(esquemaContrato, fd);
+  if (!v.ok) return falha(v.erro);
+
+  const d = v.dados;
+  const upload = fd.get("anexo");
+  const temAnexo = upload instanceof File && upload.size > 0;
+
+  if (temAnexo) {
+    if (upload.size > 12 * 1024 * 1024) return falha("O ficheiro não pode ultrapassar 12 MB.");
+    const tiposOk = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "image/png",
+      "image/jpeg",
+      "image/webp",
+    ];
+    if (upload.type && !tiposOk.includes(upload.type) && !upload.name.match(/\.(pdf|doc|docx|png|jpe?g|webp)$/i)) {
+      return falha("Tipo de ficheiro não suportado (PDF, Word ou imagem).");
+    }
   }
-  refrescar("/clientes", clienteId ? `/clientes/${clienteId}` : "/clientes");
+
+  try {
+    let id = d.id;
+    const nomeFicheiro = temAnexo ? upload.name.slice(0, 200) : d.ficheiro;
+    const campos = [
+      d.cliente_id,
+      d.proposta_id || null,
+      d.projeto_id || null,
+      d.titulo,
+      d.estado,
+      d.data,
+      nomeFicheiro,
+      d.notas,
+    ];
+
+    if (id) {
+      await executa(
+        `UPDATE contratos SET cliente_id=?, proposta_id=?, projeto_id=?, titulo=?, estado=?,
+          data=?, ficheiro=?, notas=? WHERE id=?`,
+        ...campos,
+        id,
+      );
+    } else {
+      const res = await insere(
+        `INSERT INTO contratos (cliente_id, proposta_id, projeto_id, titulo, estado, data, ficheiro, notas)
+         VALUES (?,?,?,?,?,?,?,?)`,
+        ...campos,
+      );
+      id = Number(res.lastInsertRowid);
+    }
+
+    if (temAnexo && id) {
+      const chave = `contrato:${id}`;
+      const dados = Buffer.from(await upload.arrayBuffer());
+      await executa(
+        `INSERT INTO ficheiros (chave, tipo, dados, atualizado_em) VALUES (?,?,?,${AGORA})
+         ON CONFLICT(chave) DO UPDATE
+           SET tipo=excluded.tipo, dados=excluded.dados, atualizado_em=excluded.atualizado_em`,
+        chave,
+        upload.type || "application/octet-stream",
+        dados,
+      );
+      await executa("UPDATE contratos SET ficheiro=? WHERE id=?", upload.name.slice(0, 200), id);
+    }
+
+    refrescar("/clientes", `/clientes/${d.cliente_id}`);
+    return ok(temAnexo ? "Contrato e documento guardados" : "Contrato guardado");
+  } catch {
+    return falha("Não foi possível guardar o contrato.");
+  }
 }
 
-export async function apagarContrato(fd: FormData) {
+export async function apagarContrato(fd: FormData): Promise<ResultadoAcao> {
   const clienteId = numero(fd, "cliente_id");
-  await executa("DELETE FROM contratos WHERE id=?", numero(fd, "id"));
-  refrescar("/clientes", clienteId ? `/clientes/${clienteId}` : "/clientes");
+  const id = numero(fd, "id");
+  try {
+    await executa("DELETE FROM ficheiros WHERE chave=?", `contrato:${id}`);
+    await executa("DELETE FROM contratos WHERE id=?", id);
+    refrescar("/clientes", clienteId ? `/clientes/${clienteId}` : "/clientes");
+    return ok("Contrato apagado");
+  } catch {
+    return falha("Não foi possível apagar o contrato.");
+  }
 }
 
 // --- Serviços recorrentes ----------------------------------------------------
@@ -450,34 +524,43 @@ export async function guardarBriefing(leadId: number, dados: Record<string, unkn
 export async function guardarAnalise(
   inputs: InputsCalculadora,
   opcoes: { leadId?: number | null; titulo?: string } = {},
-) {
-  const r = calcularPreco(inputs);
-  const res = await insere(
-    `INSERT INTO analises (lead_id, titulo, inputs, preco_minimo, preco_recomendado, preco_premium,
-                           mensalidade, plano_manutencao, horas_estimadas, valor_hora)
-     VALUES (?,?,?,?,?,?,?,?,?,?)`,
-    opcoes.leadId ?? null,
-    opcoes.titulo ?? r.pacote.nome,
-    JSON.stringify(inputs),
-    r.precoFinal.minimo,
-    r.precoFinal.recomendado,
-    r.precoFinal.premium,
-    r.manutencao.valor,
-    r.manutencao.plano,
-    inputs.horasEstimadas,
-    r.valorHora,
-  );
-
-  if (opcoes.leadId) {
-    await executa(
-      `UPDATE leads SET valor_estimado=?, atualizado_em=${AGORA} WHERE id=?`,
-      r.precoFinal.recomendado,
-      opcoes.leadId,
-    );
-    refrescar("/", "/leads", `/leads/${opcoes.leadId}`);
+): Promise<ResultadoAcao & { id?: number }> {
+  const v = esquemaAnalise.safeParse(inputs);
+  if (!v.success) {
+    return falha(v.error.issues[0]?.message ?? "Dados da calculadora inválidos.");
   }
-  refrescar("/calculadora");
-  return Number(res.lastInsertRowid);
+
+  try {
+    const r = calcularPreco(v.data as InputsCalculadora);
+    const res = await insere(
+      `INSERT INTO analises (lead_id, titulo, inputs, preco_minimo, preco_recomendado, preco_premium,
+                             mensalidade, plano_manutencao, horas_estimadas, valor_hora)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+      opcoes.leadId ?? null,
+      opcoes.titulo ?? r.pacote.nome,
+      JSON.stringify(v.data),
+      r.precoFinal.minimo,
+      r.precoFinal.recomendado,
+      r.precoFinal.premium,
+      r.manutencao.valor,
+      r.manutencao.plano,
+      v.data.horasEstimadas,
+      r.valorHora,
+    );
+
+    if (opcoes.leadId) {
+      await executa(
+        `UPDATE leads SET valor_estimado=?, atualizado_em=${AGORA} WHERE id=?`,
+        r.precoFinal.recomendado,
+        opcoes.leadId,
+      );
+      refrescar("/", "/leads", `/leads/${opcoes.leadId}`);
+    }
+    refrescar("/calculadora");
+    return { ok: true, mensagem: "Análise guardada", id: Number(res.lastInsertRowid) };
+  } catch {
+    return falha("Não foi possível guardar a análise.");
+  }
 }
 
 // --- Propostas ---------------------------------------------------------------
@@ -492,33 +575,39 @@ async function proximoNumeroProposta() {
   return `P${ano}-${String((r?.n ?? 0) + 1).padStart(3, "0")}`;
 }
 
-export async function criarProposta(fd: FormData) {
-  const leadId = numero(fd, "lead_id");
-  const estado = texto(fd, "estado") ?? "Rascunho";
-  const validade = numero(fd, "validade_dias") || 30;
-  const enviada = estado === "Rascunho" ? null : hoje();
-  await executa(
-    `INSERT INTO propostas (lead_id, analise_id, numero, nivel, valor, mensalidade, validade_dias,
-                            estado, ambito, exclusoes, condicoes, observacoes, rondas_alteracoes,
-                            enviada_em, expira_em)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-    leadId,
-    numero(fd, "analise_id") || null,
-    await proximoNumeroProposta(),
-    texto(fd, "nivel") ?? "BUSINESS",
-    numero(fd, "valor"),
-    numero(fd, "mensalidade"),
-    validade,
-    estado,
-    texto(fd, "ambito"),
-    texto(fd, "exclusoes"),
-    texto(fd, "condicoes"),
-    texto(fd, "observacoes"),
-    numero(fd, "rondas_alteracoes") || 2,
-    enviada,
-    enviada ? somarDias(enviada, validade) : null,
-  );
-  refrescar(`/leads/${leadId}`, "/propostas", "/");
+export async function criarProposta(fd: FormData): Promise<ResultadoAcao> {
+  const v = validarFormulario(esquemaProposta, fd);
+  if (!v.ok) return falha(v.erro);
+
+  try {
+    const d = v.dados;
+    const enviada = d.estado === "Rascunho" ? null : hoje();
+    await executa(
+      `INSERT INTO propostas (lead_id, analise_id, numero, nivel, valor, mensalidade, validade_dias,
+                              estado, ambito, exclusoes, condicoes, observacoes, rondas_alteracoes,
+                              enviada_em, expira_em)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      d.lead_id,
+      d.analise_id || null,
+      await proximoNumeroProposta(),
+      d.nivel,
+      d.valor,
+      d.mensalidade,
+      d.validade_dias,
+      d.estado,
+      d.ambito,
+      d.exclusoes,
+      d.condicoes,
+      d.observacoes,
+      d.rondas_alteracoes,
+      enviada,
+      enviada ? somarDias(enviada, d.validade_dias) : null,
+    );
+    refrescar(`/leads/${d.lead_id}`, "/propostas", "/");
+    return ok("Proposta criada");
+  } catch {
+    return falha("Não foi possível criar a proposta.");
+  }
 }
 
 export async function atualizarProposta(fd: FormData) {
@@ -734,33 +823,41 @@ export async function converterEmProjeto(fd: FormData) {
 
 // --- Clientes ----------------------------------------------------------------
 
-export async function guardarCliente(fd: FormData) {
-  const id = numero(fd, "id");
-  const campos = [
-    texto(fd, "empresa") ?? "Sem nome",
-    texto(fd, "nif"),
-    texto(fd, "contacto_nome"),
-    texto(fd, "contacto_cargo"),
-    texto(fd, "email"),
-    texto(fd, "telefone"),
-    texto(fd, "website"),
-    texto(fd, "notas"),
-  ];
-  if (id) {
-    await executa(
-      `UPDATE clientes SET empresa=?, nif=?, contacto_nome=?, contacto_cargo=?, email=?,
-        telefone=?, website=?, notas=? WHERE id=?`,
-      ...campos,
-      id,
-    );
-  } else {
-    await executa(
-      `INSERT INTO clientes (empresa, nif, contacto_nome, contacto_cargo, email, telefone, website, notas)
-       VALUES (?,?,?,?,?,?,?,?)`,
-      ...campos,
-    );
+export async function guardarCliente(fd: FormData): Promise<ResultadoAcao> {
+  const v = validarFormulario(esquemaCliente, fd);
+  if (!v.ok) return falha(v.erro);
+
+  try {
+    const d = v.dados;
+    const campos = [
+      d.empresa,
+      d.nif,
+      d.contacto_nome,
+      d.contacto_cargo,
+      d.email,
+      d.telefone,
+      d.website,
+      d.notas,
+    ];
+    if (d.id) {
+      await executa(
+        `UPDATE clientes SET empresa=?, nif=?, contacto_nome=?, contacto_cargo=?, email=?,
+          telefone=?, website=?, notas=? WHERE id=?`,
+        ...campos,
+        d.id,
+      );
+    } else {
+      await executa(
+        `INSERT INTO clientes (empresa, nif, contacto_nome, contacto_cargo, email, telefone, website, notas)
+         VALUES (?,?,?,?,?,?,?,?)`,
+        ...campos,
+      );
+    }
+    refrescar("/clientes", "/");
+    return ok(d.id ? "Cliente atualizado" : "Cliente criado");
+  } catch {
+    return falha("Não foi possível guardar o cliente.");
   }
-  refrescar("/clientes", "/");
 }
 
 export async function apagarCliente(fd: FormData) {
@@ -829,32 +926,40 @@ export async function alternarTarefa(fd: FormData) {
 /** Prazo de pagamento por omissão, quando não é indicado outro. */
 const PRAZO_PAGAMENTO_DIAS = 30;
 
-export async function criarFatura(fd: FormData) {
-  const projetoId = numero(fd, "projeto_id") || null;
-  const clienteId =
-    numero(fd, "cliente_id") ||
-    (projetoId
-      ? ((await primeiro<{ cliente_id: number | null }>(
-          "SELECT cliente_id FROM projetos WHERE id=?",
-          projetoId,
-        ))?.cliente_id ?? null)
-      : null);
-  const emitida = texto(fd, "emitida_em");
-  await executa(
-    `INSERT INTO faturas (projeto_id, cliente_id, descricao, tipo, valor, estado, emitida_em, vence_em)
-     VALUES (?,?,?,?,?,?,?,?)`,
-    projetoId,
-    clienteId,
-    texto(fd, "descricao") ?? "Fatura",
-    texto(fd, "tipo") ?? "Adjudicação",
-    numero(fd, "valor"),
-    texto(fd, "estado") ?? "Pendente",
-    emitida,
-    // Sem prazo indicado, 30 dias a contar da emissão: sem data de vencimento
-    // não há maneira de a fatura aparecer como vencida.
-    texto(fd, "vence_em") ?? (emitida ? somarDias(emitida, PRAZO_PAGAMENTO_DIAS) : null),
-  );
-  refrescar("/", "/faturas", projetoId ? `/projetos/${projetoId}` : "/faturas");
+export async function criarFatura(fd: FormData): Promise<ResultadoAcao> {
+  const v = validarFormulario(esquemaFatura, fd);
+  if (!v.ok) return falha(v.erro);
+
+  try {
+    const d = v.dados;
+    const projetoId = d.projeto_id || null;
+    const clienteId =
+      d.cliente_id ||
+      (projetoId
+        ? ((await primeiro<{ cliente_id: number | null }>(
+            "SELECT cliente_id FROM projetos WHERE id=?",
+            projetoId,
+          ))?.cliente_id ?? null)
+        : null);
+    await executa(
+      `INSERT INTO faturas (projeto_id, cliente_id, descricao, tipo, valor, estado, emitida_em, vence_em)
+       VALUES (?,?,?,?,?,?,?,?)`,
+      projetoId,
+      clienteId,
+      d.descricao,
+      d.tipo,
+      d.valor,
+      d.estado,
+      d.emitida_em,
+      // Sem prazo indicado, 30 dias a contar da emissão: sem data de vencimento
+      // não há maneira de a fatura aparecer como vencida.
+      d.vence_em ?? (d.emitida_em ? somarDias(d.emitida_em, PRAZO_PAGAMENTO_DIAS) : null),
+    );
+    refrescar("/", "/faturas", projetoId ? `/projetos/${projetoId}` : "/faturas");
+    return ok("Fatura criada");
+  } catch {
+    return falha("Não foi possível criar a fatura.");
+  }
 }
 
 export async function alternarPagamento(fd: FormData) {

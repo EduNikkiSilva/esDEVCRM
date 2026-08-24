@@ -40,6 +40,7 @@ correr:
 ```bash
 npx playwright install chromium   # uma vez
 npm run teste-interface
+npm run teste-precos              # motor de preços, sem servidor
 ```
 
 A base de dados é criada automaticamente no primeiro arranque. Para a guardar noutro sítio
@@ -50,7 +51,8 @@ A base de dados é criada automaticamente no primeiro arranque. Para a guardar n
 [Environment]::SetEnvironmentVariable("ESDEV_DB", "C:\esDEV\data\esdev.db", "User")
 ```
 
-**Cópia de segurança:** copia `data/esdev.db`. É o sistema todo.
+**Cópia de segurança:** em **Definições → Exportar tudo (JSON)** (tabelas + logótipos +
+documentos), ou copia `data/esdev.db`. É o sistema todo.
 
 ## O que está lá dentro
 

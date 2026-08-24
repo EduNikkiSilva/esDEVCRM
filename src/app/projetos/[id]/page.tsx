@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChecklistEntrega } from "@/components/checklist-entrega";
+import { FormularioAcao } from "@/components/formulario-acao";
 import { TimelineAtividades } from "@/components/timeline-atividades";
 import { Campo, CampoSelect, PageHeader, Stat } from "@/components/ui-kit";
 import {
@@ -177,7 +178,11 @@ export default async function ProjetoPage({ params }: { params: Promise<{ id: st
                 )}
               </ul>
 
-              <form action={criarFatura} className="grid gap-3 border-t border-border/60 pt-4 sm:grid-cols-4">
+              <FormularioAcao
+                action={criarFatura}
+                className="grid gap-3 border-t border-border/60 pt-4 sm:grid-cols-4"
+                sucesso="Fatura criada"
+              >
                 <input type="hidden" name="projeto_id" value={projeto.id} />
                 <Campo nome="descricao" label="Descrição" placeholder="Trabalho adicional" />
                 <CampoSelect nome="tipo" label="Tipo" opcoes={TIPOS_FATURA} />
@@ -189,7 +194,7 @@ export default async function ProjetoPage({ params }: { params: Promise<{ id: st
                     Adicionar
                   </Button>
                 </div>
-              </form>
+              </FormularioAcao>
             </CardContent>
           </Card>
 
